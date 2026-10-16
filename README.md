@@ -13,3 +13,11 @@ Boutique en ligne de vêtements et de sportswear Originalfit, pensée pour déco
 3. Contactez Originalfit sur [Instagram](https://www.instagram.com/the_original_fit/) pour confirmer le modèle, le prix, le délai et la livraison.
 
 Les images du site sont des visuels d’inspiration et ne représentent pas nécessairement des articles en stock. Les prix et la disponibilité sont confirmés par la boutique avant toute commande. Aucun paiement n’est effectué sur le site.
+
+## Fichiers du site
+
+- `index.html` : structure et contenu de la page (HTML).
+- `styles.css` : couleurs, mise en page et adaptation mobile (CSS).
+- `script.js` : filtres, sélection d’articles et interactions (JavaScript).
+
+Les trois fichiers se trouvent à la racine du dépôt et doivent rester dans le même dossier pour que le site fonctionne.
