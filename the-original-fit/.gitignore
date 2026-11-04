@@ -1,0 +1,19 @@
+# Environment / secrets
+.env
+src/js/env.js
+
+# Dependencies
+node_modules/
+
+# System files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor
+.vscode/
+.idea/

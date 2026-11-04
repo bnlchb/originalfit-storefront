@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0a0a0a">
+  <meta name="description" content="THE ORIGINAL FIT — premium streetwear t-shirts & hoodies. Wear your style.">
+  <title>THE ORIGINAL FIT — Wear Your Style</title>
+  <link rel="icon" type="image/svg+xml" href="./src/assets/icons/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./src/css/style.css">
+  <link rel="stylesheet" href="./src/css/responsive.css">
+  <link rel="stylesheet" href="./src/css/animations.css">
+  <meta property="og:title" content="THE ORIGINAL FIT — Wear Your Style">
+  <meta property="og:description" content="Premium T-Shirts. Timeless Design. Made for the ones who stand out.">
+  <meta property="og:type" content="website">
+</head>
+<body data-page="home" data-base="pages/">
+
+  <!-- ════════════════════════════ announcement bar ════════════════════════════ -->
+  <div class="announcement" id="announcement">
+    <div class="container announcement-in">
+      <p class="announcement-msg">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.6"/><circle cx="17.5" cy="18" r="1.6"/></svg>
+        Free shipping on orders over $50
+      </p>
+      <nav class="announcement-links" aria-label="Support">
+        <a href="pages/contact.html#faq">Track Order</a>
+        <a href="pages/contact.html">Help</a>
+      </nav>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════ header / nav ════════════════════════════════ -->
+  <header class="site-header" id="site-header">
+    <div class="container header-in">
+      <button class="hamburger" id="hamburger" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">
+        <span></span><span></span><span></span>
+      </button>
+      <a class="logo" href="index.html" data-nav="home">THE <b>ORIGINAL&nbsp;FIT</b></a>
+      <nav class="main-nav" aria-label="Main navigation">
+        <a href="index.html" data-nav="home">Home</a>
+        <a href="pages/shop.html" data-nav="shop">Shop</a>
+        <a href="pages/collections.html" data-nav="collections">Collections</a>
+        <a href="pages/about.html" data-nav="about">About</a>
+        <a href="pages/contact.html" data-nav="contact">Contact</a>
+      </nav>
+      <div class="header-actions">
+        <button class="icon-btn" data-open-search aria-label="Search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4.1-4.1"/></svg>
+        </button>
+        <a class="icon-btn" data-auth-link href="pages/login.html" title="Sign in" aria-label="Account">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c.8-3.6 3.3-5.5 8-5.5s7.2 1.9 8 5.5"/></svg>
+        </a>
+        <button class="icon-btn" id="cart-open" aria-label="Shopping cart">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8V6a6 6 0 0 1 12 0v2"/><path d="M4 8h16l-1.1 11.3a1.5 1.5 0 0 1-1.5 1.6H6.6a1.5 1.5 0 0 1-1.5-1.6z"/></svg>
+          <span class="cart-count" id="cart-count" hidden>0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ════════════════════════════ mobile menu ═════════════════════════════════ -->
+  <nav class="mobile-menu" id="mobile-menu" aria-label="Mobile navigation">
+    <a class="mm-link" href="index.html">Home <span class="arrow">↓</span></a>
+    <a class="mm-link" href="pages/shop.html">Shop <span class="arrow">↓</span></a>
+    <a class="mm-link" href="pages/collections.html">Collections <span class="arrow">↓</span></a>
+    <a class="mm-link" href="pages/about.html">About <span class="arrow">↓</span></a>
+    <a class="mm-link" href="pages/contact.html">Contact <span class="arrow">↓</span></a>
+    <div class="mm-meta">
+      <div class="mm-actions">
+        <button class="btn btn-outline btn-sm" data-open-search>Search</button>
+        <a class="btn btn-sm" data-cart-link href="pages/cart.html">Cart</a>
+      </div>
+      <a class="mm-note" data-auth-link href="pages/login.html">Account / Sign in</a>
+    </div>
+  </nav>
+
+  <!-- ════════════════════════════ search overlay ══════════════════════════════ -->
+  <div class="search-overlay" id="search-overlay" role="dialog" aria-modal="true" aria-label="Search products">
+    <div class="search-shell">
+      <form class="search-head" id="search-form" role="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4.1-4.1"/></svg>
+        <input id="search-input" type="search" placeholder="Search products…" autocomplete="off" aria-label="Search products">
+        <button class="search-close" id="search-close" type="button" aria-label="Close search">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"/></svg>
+        </button>
+      </form>
+      <p class="search-hint">Try “tee”, “hoodie”, “minimal” — press ESC to close</p>
+      <div class="search-results" id="search-results" hidden></div>
+    </div>
+  </div>
+
+  <main>
+
+    <!-- ══════════════════════════ hero section ══════════════════════════════ -->
+    <section class="hero" id="hero" aria-label="THE ORIGINAL FIT — premium streetwear">
+      <div class="hero-slide is-active" aria-hidden="true">
+        <img src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=1600&auto=format&fit=crop" alt="" loading="eager">
+      </div>
+      <div class="hero-slide">
+        <img src="https://images.unsplash.com/photo-1552394211-1f9c6b916c09?q=80&w=1600&auto=format&fit=crop" alt="" loading="lazy">
+      </div>
+      <div class="hero-slide">
+        <img src="https://images.unsplash.com/photo-1586790170083-2f9ceadc732d?q=80&w=1600&auto=format&fit=crop" alt="" loading="lazy">
+      </div>
+      <div class="hero-gradient"></div>
+
+      <div class="hero-inner">
+        <p class="kicker hero-kicker">Streetwear — Premium Quality</p>
+        <h1 class="hero-title"><span class="line">THE</span><span class="line">ORIGINAL&nbsp;FIT</span></h1>
+        <p class="hero-subtitle">Wear Your Style</p>
+        <p class="hero-lead">Premium T-Shirts. Timeless Design.<br>Made for the ones who stand out.</p>
+        <a class="btn hero-cta" href="pages/shop.html">Shop Now <span class="arrow">→</span></a>
+      </div>
+
+      <a class="hero-scroll" href="#new-arrivals">Scroll Down <span class="arrow">↓</span></a>
+
+      <div class="hero-rail" aria-hidden="true">
+        <div class="hero-dots"></div>
+        <span class="hero-est">EST. 2024</span>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════ new arrivals ══════════════════════════════ -->
+    <section class="section" id="new-arrivals">
+      <div class="container">
+        <div class="section-head reveal">
+          <div>
+            <p class="kicker">Fresh Drops</p>
+            <h2>New Arrivals</h2>
+          </div>
+          <a class="link-arrow" href="pages/shop.html">View All <span class="arrow">→</span></a>
+        </div>
+        <div class="product-grid" id="home-grid"></div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════ promotion banner ══════════════════════════ -->
+    <section class="section tight" aria-label="Seasonal sale">
+      <div class="container reveal">
+        <div class="promo">
+          <div class="promo-bg" style="background-image:url('https://images.unsplash.com/photo-1578768079052-aa76e52ff62e?q=80&w=1600&auto=format&fit=crop')"></div>
+          <div class="promo-in">
+            <p class="promo-pre">Up To</p>
+            <p class="promo-title">50% OFF</p>
+            <p class="promo-sub">On Selected Items</p>
+            <a class="btn btn-light promo-cta" href="pages/shop.html?filter=sale">Shop The Sale <span class="arrow">→</span></a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════ our collections ═══════════════════════════ -->
+    <section class="section" id="collections">
+      <div class="container">
+        <div class="section-head reveal">
+          <div>
+            <p class="kicker">Curated</p>
+            <h2>Our Collections</h2>
+            <p class="sub">Three ways to wear the fit — pick a direction, we have the pieces.</p>
+          </div>
+          <a class="link-arrow" href="pages/collections.html">All Collections <span class="arrow">→</span></a>
+        </div>
+        <div class="collection-grid">
+          <a class="collection-card reveal" href="pages/shop.html?category=streetwear" style="--d:0ms">
+            <img src="https://images.unsplash.com/photo-1614252369475-531eba835eb1?q=80&w=1200&auto=format&fit=crop" alt="Streetwear collection" loading="lazy">
+            <div class="cc-body">
+              <h3 class="cc-name">Streetwear</h3>
+              <span class="cc-link">Discover <span class="arrow">→</span></span>
+            </div>
+          </a>
+          <a class="collection-card reveal" href="pages/shop.html?category=minimalist" style="--d:90ms">
+            <img src="https://images.unsplash.com/photo-1627130697816-4d71dbfe6a5b?q=80&w=1200&auto=format&fit=crop" alt="Minimalist collection" loading="lazy">
+            <div class="cc-body">
+              <h3 class="cc-name">Minimalist</h3>
+              <span class="cc-link">Discover <span class="arrow">→</span></span>
+            </div>
+          </a>
+          <a class="collection-card reveal" href="pages/shop.html?category=hoodies" style="--d:180ms">
+            <img src="https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=1200&auto=format&fit=crop" alt="Hoodies collection" loading="lazy">
+            <div class="cc-body">
+              <h3 class="cc-name">Hoodies</h3>
+              <span class="cc-link">Discover <span class="arrow">→</span></span>
+            </div>
+          </a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ════════════════════════════ footer ══════════════════════════════════════ -->
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="f-brand">
+        <a class="logo light" href="index.html">THE ORIGINAL&nbsp;FIT</a>
+        <p>Wear Your Style.</p>
+      </div>
+      <nav class="f-col" aria-label="Footer links">
+        <h4 class="f-title">Links</h4>
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="pages/shop.html">Shop</a></li>
+          <li><a href="pages/collections.html">Collections</a></li>
+          <li><a href="pages/about.html">About</a></li>
+          <li><a href="pages/contact.html">Contact</a></li>
+        </ul>
+      </nav>
+      <div class="f-col">
+        <h4 class="f-title">Follow Us</h4>
+        <ul>
+          <li><a href="https://www.instagram.com/the_original_fit/" target="_blank" rel="noreferrer">Instagram ↗</a></li>
+          <li><a href="https://www.tiktok.com/@theoriginalfit" target="_blank" rel="noreferrer">TikTok ↗</a></li>
+          <li><a href="https://www.youtube.com/@theoriginalfit" target="_blank" rel="noreferrer">YouTube ↗</a></li>
+          <li><a href="https://x.com/theoriginalfit" target="_blank" rel="noreferrer">X ↗</a></li>
+        </ul>
+      </div>
+      <div class="f-news">
+        <h4 class="f-title">Newsletter</h4>
+        <p>Subscribe to our newsletter for exclusive offers.</p>
+        <form id="newsletter-form" class="news-form" novalidate>
+          <input type="email" name="email" placeholder="Your email address" aria-label="Email address" required>
+          <button class="btn btn-light btn-sm" type="submit">Subscribe</button>
+        </form>
+        <p class="news-note">No spam. Unsubscribe anytime.</p>
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <p>© <span id="year">2024</span> THE ORIGINAL FIT. All rights reserved.</p>
+      <nav aria-label="Legal">
+        <a href="pages/about.html#privacy">Privacy Policy</a>
+        <span class="sep">|</span>
+        <a href="pages/about.html#terms">Terms of Service</a>
+        <span class="sep">|</span>
+        <a href="pages/contact.html#faq">FAQ</a>
+      </nav>
+    </div>
+  </footer>
+
+  <!-- ════════════════════════════ cart drawer ═════════════════════════════════ -->
+  <div class="drawer-backdrop" id="drawer-backdrop"></div>
+  <aside class="cart-drawer" id="cart-drawer" role="dialog" aria-modal="true" aria-label="Shopping cart">
+    <header class="cd-head">
+      <h2 class="cd-title">Cart <span id="drawer-count">(0)</span></h2>
+      <button class="cd-close" id="cd-close" aria-label="Close cart">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"/></svg>
+      </button>
+    </header>
+    <div class="cd-ship"><div id="cart-ship-note"><b>Free shipping on orders over $50</b></div></div>
+    <div class="cd-items" id="cart-items"></div>
+    <footer class="cd-foot">
+      <div class="cd-subtotal"><span>Subtotal</span><b id="drawer-subtotal">$0.00</b></div>
+      <div class="cd-actions">
+        <a class="btn btn-outline" data-cart-link href="pages/cart.html">View Cart</a>
+        <a class="btn" data-cart-link href="pages/cart.html">Checkout</a>
+      </div>
+      <p class="cd-hint">Shipping is calculated at checkout.</p>
+    </footer>
+  </aside>
+
+  <div class="toast-wrap" id="toast-wrap"></div>
+
+  <script src="./src/js/env.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="./src/js/supabase.js" defer></script>
+  <script src="./src/js/demo-data.js" defer></script>
+  <script src="./src/js/products.js" defer></script>
+  <script src="./src/js/cart.js" defer></script>
+  <script src="./src/js/wishlist.js" defer></script>
+  <script src="./src/js/auth.js" defer></script>
+  <script src="./src/js/search.js" defer></script>
+  <script src="./src/js/main.js" defer></script>
+</body>
+</html>
