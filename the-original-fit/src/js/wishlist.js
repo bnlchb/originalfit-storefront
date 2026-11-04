@@ -1,5 +1,5 @@
 /* ============================================================================
-   THE ORIGINAL FIX — wishlist.js
+   THE ORIGINAL FIT — wishlist.js
    Wishlist with local persistence; syncs to Supabase `wishlists` when signed in.
    ============================================================================ */
 'use strict';
@@ -37,15 +37,15 @@ window.TOF = window.TOF || {};
     });
   }
 
-  async function remoteToggle(p) {
+  async function remoteToggle(pid, willAdd) {
     if (!T.sb || !userId) return true; // local mode is always "successful"
     try {
-      if (has(p)) {
-        const { error } = await T.sb.from('wishlists').delete()
-          .match({ user_id: userId, product_id: p });
+      if (willAdd) {
+        const { error } = await T.sb.from('wishlists').upsert({ user_id: userId, product_id: pid }, { ignoreDuplicates: true });
         if (error) throw error;
       } else {
-        const { error } = await T.sb.from('wishlists').upsert({ user_id: userId, product_id: p }, { ignoreDuplicates: true });
+        const { error } = await T.sb.from('wishlists').delete()
+          .match({ user_id: userId, product_id: pid });
         if (error) throw error;
       }
     } catch (err) {
@@ -64,10 +64,14 @@ window.TOF = window.TOF || {};
     paintLocally(pid);
     emit();
 
-    remoteToggle(pid).then((ok) => {
+    remoteToggle(pid, willAdd).then((ok) => {
       if (!ok) {
-        // revert view state? keep local; user is informed
-        T.toast('Wishlist will sync when you are signed in.');
+        // rollback the local flip so the heart state matches the server
+        if (willAdd) ids = ids.filter((n) => n !== pid); else ids.push(pid);
+        save();
+        paintLocally(pid);
+        emit();
+        T.toast('Could not update your wishlist — trying again next time.');
       }
     });
     return willAdd ? 'added' : 'removed';

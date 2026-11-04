@@ -104,9 +104,7 @@ window.TOF = window.TOF || {};
 
   T.auth.resetPassword = async (email) => {
     if (demoGuard()) return { ok: false };
-    const { error } = await T.sb.auth.resetPasswordForEmail(email, {
-      redirectTo: location.origin + location.pathname.replace('login.html', 'login.html'),
-    });
+    const { error } = await T.sb.auth.resetPasswordForEmail(email);
     return { ok: !error, error };
   };
 
@@ -116,8 +114,11 @@ window.TOF = window.TOF || {};
       const { error } = await T.sb.from('profiles')
         .update({ full_name: fields.fullName, phone: fields.phone })
         .match({ id: sessionUser.id });
-      if (error && !/permission|row level/i.test(error.message || '')) {
+      if (error) {
         console.warn('[TOF] profile update:', error.message);
+        return { ok: false, error: /permission|row level/i.test(error.message || '')
+          ? 'Profile updates need the schema (supabase/schema.sql) to be applied.'
+          : 'Could not save your profile — try again.' };
       }
     }
     document.dispatchEvent(new CustomEvent('tof:auth'));
