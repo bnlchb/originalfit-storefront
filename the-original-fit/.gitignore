@@ -1,6 +1,8 @@
 # Environment / secrets
+# (.env holds real creds — never commit. src/js/env.js HOLDS ONLY the
+#  publishable key, which is front-end-safe by design, and is committed
+#  so static hosts like GitHub Pages can reach Supabase.)
 .env
-src/js/env.js
 
 # Dependencies
 node_modules/

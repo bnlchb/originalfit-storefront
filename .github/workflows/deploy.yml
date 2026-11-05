@@ -1,0 +1,51 @@
+# Publish THE ORIGINAL FIT (the-original-fit/) to GitHub Pages.
+# The site is plain static files, so the artifact is a straight copy with
+# the site content at the artifact root. .env and any secret files are
+# stripped defensively before upload.
+name: Deploy site to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Assemble artifact (site content at root)
+        run: |
+          mkdir -p _site
+          cp -r the-original-fit/. _site/
+          rm -f _site/.env
+          find _site -name '.env*' -not -name '.nojekyll' -delete
+          touch _site/.nojekyll
+
+      - name: Configure Pages (auto-enable on first run)
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - id: deployment
+        name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
