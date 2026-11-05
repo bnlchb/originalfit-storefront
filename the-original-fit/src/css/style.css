@@ -917,6 +917,9 @@ color: #fff;
   border-radius: var(--radius-sm);
   background: var(--grey-product);
 }
+.ci-info {
+  min-width: 0; /* keep long product names from blowing out the 1fr column */
+}
 .ci-name {
   font-size: .8rem;
   font-weight: 700;
@@ -1551,6 +1554,7 @@ color: #fff;
 .status-pill.pending { background: var(--black); color: var(--white); border-color: var(--black); }
 .order-items { font-size: .88rem; color: var(--muted); }
 .order-items li { display: flex; justify-content: space-between; gap: 1rem; padding: .3rem 0; }
+.order-empty-note { margin: .2rem 0; font-size: .84rem; color: var(--muted); letter-spacing: .01em; }
 .order-total { display: flex; justify-content: space-between; border-top: 1px solid var(--line); padding-top: .7rem; font-weight: 800; }
 
 /* --------------------------------------------------------------- misc end -- */
