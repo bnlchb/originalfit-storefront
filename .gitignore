@@ -1,0 +1,14 @@
+# Legacy v1 files — kept on this machine only, NOT published on GitHub.
+# (The new site lives in the-original-fit/)
+/config.js
+/index.html
+/script.js
+/styles.css
+/supabase.sql
+/README.md
+/apercu-panneau.png
+
+# Secrets / local env
+the-original-fit/.env
+the-original-fit/src/js/env.js
+node_modules/
