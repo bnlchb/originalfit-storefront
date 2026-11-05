@@ -10,5 +10,4 @@
 
 # Secrets / local env
 the-original-fit/.env
-the-original-fit/src/js/env.js
 node_modules/
