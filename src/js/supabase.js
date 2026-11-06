@@ -13,7 +13,7 @@ window.TOF = window.TOF || {};
   T.base = document.body && document.body.dataset.base ? document.body.dataset.base : '';
   T.url = (page) => T.base + page;
 
-  T.money = (n) => '$' + Number(n).toFixed(2);
+  T.money = (n) => Number(n).toFixed(2) + ' DH';
 
   T.esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',

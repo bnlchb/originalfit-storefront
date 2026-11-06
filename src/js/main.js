@@ -164,7 +164,7 @@ window.TOF = window.TOF || {};
     const note = qs('#cart-ship-note');
     if (note) {
       if (!items.length) {
-        note.innerHTML = '<b>Free shipping on orders over $50</b>';
+        note.innerHTML = '<b>Free shipping on orders over 500 DH</b>';
       } else if (sub >= freeAt) {
         note.innerHTML = '<b>✓ Free shipping unlocked</b>';
       } else {

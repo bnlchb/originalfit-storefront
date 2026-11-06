@@ -21,7 +21,7 @@
     <div class="container announcement-in">
       <p class="announcement-msg">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.6"/><circle cx="17.5" cy="18" r="1.6"/></svg>
-        Free shipping on orders over $50
+        Free shipping on orders over 500 DH
       </p>
       <nav class="announcement-links" aria-label="Support">
         <a href="contact.html#faq">Track Order</a>
@@ -114,9 +114,9 @@
 
             <aside class="summary-card">
               <h2>Order Summary</h2>
-              <div class="sum-row"><span>Subtotal</span><b id="sum-subtotal">$0.00</b></div>
+              <div class="sum-row"><span>Subtotal</span><b id="sum-subtotal">0.00 DH</b></div>
               <div class="sum-row"><span>Shipping</span><b id="sum-shipping">Free</b></div>
-              <div class="sum-total"><span>Total</span><span class="big" id="sum-total">$0.00</span></div>
+              <div class="sum-total"><span>Total</span><span class="big" id="sum-total">0.00 DH</span></div>
               <p class="free-tag" id="free-note"></p>
               <button class="btn" id="checkout-btn" type="button">Checkout <span class="arrow">→</span></button>
 
@@ -132,7 +132,7 @@
                 </div>
                 <div class="field">
                   <label for="ad-phone">Phone</label>
-                  <input id="ad-phone" name="phone" type="tel" placeholder="+1 555 000 0000" autocomplete="tel">
+                  <input id="ad-phone" name="phone" type="tel" placeholder="+212 6 12 34 56 78" autocomplete="tel">
                 </div>
                 <div class="field">
                   <label for="ad-email">Email</label>
@@ -145,16 +145,16 @@
                 <div class="form-row">
                   <div class="field">
                     <label for="ad-city">City *</label>
-                    <input id="ad-city" name="city" type="text" placeholder="New York" autocomplete="address-level2" required>
+                    <input id="ad-city" name="city" type="text" placeholder="Casablanca" autocomplete="address-level2" required>
                   </div>
                   <div class="field">
-                    <label for="ad-zip">ZIP code *</label>
-                    <input id="ad-zip" name="zip" type="text" placeholder="10001" autocomplete="postal-code" required>
+                    <label for="ad-zip">Postal code *</label>
+                    <input id="ad-zip" name="zip" type="text" placeholder="20000" autocomplete="postal-code" required>
                   </div>
                 </div>
                 <div class="field">
                   <label for="ad-country">Country</label>
-                  <input id="ad-country" name="country" type="text" value="United States" autocomplete="country-name">
+                  <input id="ad-country" name="country" type="text" value="Morocco" autocomplete="country-name">
                 </div>
                 <button class="btn" type="submit">Place Order <span class="arrow">→</span></button>
                 <p style="font-size:.76rem;color:var(--muted-light);text-align:center">Cash-on-delivery / manual confirmation — no payment is collected on this storefront.</p>
@@ -247,10 +247,10 @@
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"/></svg>
       </button>
     </header>
-    <div class="cd-ship"><div id="cart-ship-note"><b>Free shipping on orders over $50</b></div></div>
+    <div class="cd-ship"><div id="cart-ship-note"><b>Free shipping on orders over 500 DH</b></div></div>
     <div class="cd-items" id="cart-items"></div>
     <footer class="cd-foot">
-      <div class="cd-subtotal"><span>Subtotal</span><b id="drawer-subtotal">$0.00</b></div>
+      <div class="cd-subtotal"><span>Subtotal</span><b id="drawer-subtotal">0.00 DH</b></div>
       <div class="cd-actions">
         <a class="btn btn-outline" data-cart-link href="cart.html">View Cart</a>
         <a class="btn" data-cart-link href="cart.html">Checkout</a>

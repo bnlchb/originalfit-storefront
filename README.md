@@ -61,7 +61,7 @@ with no backend connected the grids keep their skeleton/empty states instead of 
 
 ```
 the-original-fit/
-├── index.html                 ← home (hero, new arrivals, sale banner, collections)
+├── index.html                 ← home (hero, New Arrival, sale banner, collections)
 ├── package.json               ← scripts only, zero dependencies
 ├── .env / .env.example        ← Supabase credentials (git-ignored / template)
 ├── .gitignore
@@ -106,10 +106,10 @@ the-original-fit/
 
 | Area | Details |
 | --- | --- |
-| Home | Announcement bar, transparent→solid sticky nav, 3-slide hero with EST. 2024 rail & scroll cue, New Arrivals (live), 50% OFF promo banner, Our Collections |
+| Home | Announcement bar, transparent→solid sticky nav, 3-slide hero with EST. 2024 rail & scroll cue, New Arrival (live), 50% OFF promo banner, Our Collections |
 | Shop | Category chips, On-Sale filter, sorting (best sellers / newest / price / name), keyword search, result count, skeletons, empty state |
 | Product | Zoom-on-hover media, size selector, quantity stepper, wishlist heart, stock state, related products, accordions |
-| Cart | Sliding drawer + full page, size chips per line, qty · −/+, remove, free-shipping progress over $50, persisted between sessions (localStorage) |
+| Cart | Sliding drawer + full page, size chips per line, qty · −/+, remove, free-shipping progress over 500 DH, persisted between sessions (localStorage) |
 | Checkout | Auth-gated order wrapper → address form → order + order_items written to Supabase; guest cart keeps working |
 | Accounts | Supabase email/password auth, auto-created `profiles` row (trigger), profile editing, order history, wishlist |
 | Wishlist | Heart on cards & PDP, persists locally, syncs/merges with `wishlists` when signed in |

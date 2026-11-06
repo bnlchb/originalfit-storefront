@@ -8,8 +8,8 @@ window.TOF = window.TOF || {};
 
 (function cartModule(T) {
   const KEY = 'tof_cart_v1';
-  const FREE_SHIPPING_AT = 50;
-  const STANDARD_SHIPPING = 6.99;
+  const FREE_SHIPPING_AT = 500;   // DH — free shipping threshold
+  const STANDARD_SHIPPING = 30;   // DH — flat shipping below the threshold
 
   function load() {
     try { return JSON.parse(localStorage.getItem(KEY)) || []; }
@@ -217,7 +217,7 @@ window.TOF = window.TOF || {};
         total: subtotal() + shippingCost,
         address: {
           full_name: data.full_name, phone: data.phone || '', email: data.email || '',
-          address: data.address, city: data.city, zip: data.zip, country: data.country || 'USA',
+          address: data.address, city: data.city, zip: data.zip, country: data.country || 'Morocco',
         },
         items,
       });
