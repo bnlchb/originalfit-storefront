@@ -608,7 +608,10 @@ window.TOF = window.TOF || {};
         <div class="order-top">
           <span class="oid">#${String(o.id || '').slice(0, 8).toUpperCase()}</span>
           <span class="oid">${fmtDT(o.created_at)}</span>
-          <span class="oid">${T.esc((o.customer && (o.customer.full_name || o.customer.email)) || 'unknown customer')}</span>
+          <span class="oid">${T.esc(
+            (o.customer && (o.customer.full_name || o.customer.email))
+            || (o.shipping_address && (o.shipping_address.full_name || o.shipping_address.email))
+            || 'guest customer')}</span>
         </div>
         <ul class="order-items">
           ${o.items.length

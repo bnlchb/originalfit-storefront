@@ -253,6 +253,12 @@ drop policy if exists "orders_insert_own" on public.orders;
 create policy "orders_insert_own" on public.orders
   for insert to authenticated with check (auth.uid() = user_id);
 
+-- guest checkout: anonymous visitors order without an account (user_id null) --
+drop policy if exists "orders_insert_guest" on public.orders;
+create policy "orders_insert_guest" on public.orders
+  for insert to anon
+  with check (user_id is null);
+
 drop policy if exists "orders_update_own_cancel" on public.orders;
 create policy "orders_update_own_cancel" on public.orders
   for update to authenticated
@@ -279,6 +285,11 @@ drop policy if exists "order_items_insert_own" on public.order_items;
 create policy "order_items_insert_own" on public.order_items
   for insert to authenticated
   with check (exists (select 1 from public.orders o where o.id = order_id and o.user_id = auth.uid()));
+
+drop policy if exists "order_items_insert_guest" on public.order_items;
+create policy "order_items_insert_guest" on public.order_items
+  for insert to anon
+  with check (exists (select 1 from public.orders o where o.id = order_id and o.user_id is null));
 
 drop policy if exists "order_items_admin_select_all" on public.order_items;
 create policy "order_items_admin_select_all" on public.order_items

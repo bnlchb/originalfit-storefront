@@ -184,18 +184,10 @@ window.TOF = window.TOF || {};
     const gate = document.getElementById('checkout-gate');
     const addressForm = document.getElementById('address-form');
     const successEl = document.getElementById('order-success');
-
-    if (!user) {
-      const notice = document.getElementById('login-gate');
-      if (notice) {
-        notice.hidden = false;
-        notice.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-      T.toast('Sign in to complete your order.');
-      return;
-    }
+    const loginGate = document.getElementById('login-gate');
 
     gate?.setAttribute('hidden', '');
+    if (loginGate) loginGate.hidden = !!user; // guests keep an optional sign-in hint
     addressForm?.removeAttribute('hidden');
     addressForm?.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
@@ -213,7 +205,7 @@ window.TOF = window.TOF || {};
 
       const shippingCost = shipping();
       const res = await T.api.createOrder({
-        userId: user.id,
+        userId: user ? user.id : null,
         total: subtotal() + shippingCost,
         address: {
           full_name: data.full_name, phone: data.phone || '', email: data.email || '',
@@ -234,6 +226,12 @@ window.TOF = window.TOF || {};
       successEl.hidden = false;
       successEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
       document.getElementById('success-id').textContent = 'Order #' + String(res.id).slice(0, 8).toUpperCase();
+      const note = document.getElementById('success-note');
+      if (note) note.textContent = user
+        ? 'We sent a confirmation email and you can follow the progress under My Account → Orders.'
+        : 'You ordered as a guest — keep your order number handy, we will contact you to confirm the details.';
+      const ordersLink = document.getElementById('success-orders-link');
+      if (ordersLink) ordersLink.hidden = !user;
       clear();
       btn.disabled = false;
       btn.textContent = 'Place Order';
