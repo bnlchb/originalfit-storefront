@@ -1,7 +1,9 @@
 # Publish THE ORIGINAL FIT (the-original-fit/) to GitHub Pages.
 # The site is plain static files, so the artifact is a straight copy with
-# the site content at the artifact root. .env and any secret files are
-# stripped defensively before upload.
+# the site content at the artifact root. Credentials are never committed and
+# no .env is needed in CI: src/js/env.js is generated at build time from the
+# SUPABASE_URL / SUPABASE_ANON_KEY repository secrets (Settings → Secrets and
+# variables → Actions). .env / secret files are still stripped defensively.
 name: Deploy site to GitHub Pages
 
 on:
@@ -27,6 +29,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Generate src/js/env.js from deploy secrets
+        working-directory: the-original-fit
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: npm run env:sync
 
       - name: Assemble artifact (site content at root)
         run: |

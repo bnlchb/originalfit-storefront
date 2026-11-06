@@ -40,14 +40,19 @@ back to a **demo catalog** (identical shape to the live schema) so everything st
 
 ### Environment variables
 
-- `.env` — real values, **git-ignored** (never commit).
+- `.env` — the only place real values exist locally, **git-ignored** (never commit).
 - `.env.example` — template for new clones.
-- The values reach the browser in two safe ways:
+- **No credential is hard-coded anywhere in the source.** The values reach the browser
+  without ever being committed:
   - **Dev:** the built-in server serves them at `GET /__/env.json` straight from `.env`.
-  - **Static hosting (GitHub Pages/Netlify/S3):** run `npm run env:sync` — it generates the
-    git-ignored `src/js/env.js` that ships with your build.
-- Credentials are **never hard-coded** into HTML/CSS/JS; only the public anon key is ever
-  sent to the browser — data security comes from Row Level Security.
+  - **Static hosting by hand (Netlify/S3/…):** `npm run env:sync` generates the git-ignored
+    `src/js/env.js` from `.env`, which ships with your build.
+  - **CI (the included GitHub Actions workflow):** add `SUPABASE_URL` / `SUPABASE_ANON_KEY`
+    as repository *secrets* (Settings → Secrets and variables → Actions); the workflow
+    regenerates `src/js/env.js` at build time. The `.env` file itself never reaches the
+    repository or the deploy artifact.
+- Only the public anon key is ever sent to the browser — data security comes from
+  Row Level Security.
 
 ---
 
@@ -130,8 +135,13 @@ happens through the Supabase dashboard (or a future admin tool with the server-s
 ## 5. Static deployment
 
 ```bash
-npm run env:sync    # writes src/js/env.js from .env (git-ignored)
+# Deploying by hand (Netlify / S3 / …):
+npm run env:sync    # writes git-ignored src/js/env.js from .env
 # deploy the whole folder to your static host (index.html at root)
+
+# Deploying the included GitHub Actions workflow: no .env in CI needed —
+# add SUPABASE_URL and SUPABASE_ANON_KEY as repository secrets and push.
+# The workflow regenerates src/js/env.js from secrets at build time.
 ```
 
 ---
