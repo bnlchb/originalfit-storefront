@@ -38,8 +38,7 @@ jobs:
       - name: Assemble artifact (site content at artifact root)
         run: |
           mkdir -p _site
-          cp -r ./[^.]* _site/
-          rm -f _site/.env
+          find . -maxdepth 1 -mindepth 1 -not -name '.*' -not -name '_site' -exec cp -r {} _site/ \;
           find _site -name '.env*' -not -name '.nojekyll' -delete
           touch _site/.nojekyll
 
