@@ -136,9 +136,9 @@
         </form>
 
         <div class="auth-note" id="auth-demo-note" hidden>
-          <b>Demo mode:</b> accounts need Supabase. Add your project URL + anon key to <b>.env</b>,
-          run <b>supabase/schema.sql</b> in the SQL editor, and restart <b>npm run dev</b>. Until then,
-          browsing, cart and orders-catalog work in demo mode.
+          <b>Backend not connected:</b> accounts need Supabase. Add your project URL + anon key to <b>.env</b>,
+          run <b>supabase/schema.sql</b> in the SQL editor, and restart <b>npm run dev</b>. Until then the
+          catalog loads from Supabase only and the store stays empty.
         </div>
       </div>
     </div>
@@ -219,7 +219,6 @@
   <script src="../src/js/env.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="../src/js/supabase.js" defer></script>
-  <script src="../src/js/demo-data.js" defer></script>
   <script src="../src/js/products.js" defer></script>
   <script src="../src/js/cart.js" defer></script>
   <script src="../src/js/wishlist.js" defer></script>

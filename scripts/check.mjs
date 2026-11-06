@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 const ROOT = decodeURIComponent(new URL('..', import.meta.url).pathname).replace(/^\/([A-Za-z]:)/, '$1');
 const pages = ['index.html','pages/shop.html','pages/product.html','pages/collections.html','pages/about.html','pages/contact.html','pages/login.html','pages/cart.html','pages/account.html'];
-const jss = ['src/js/supabase.js','src/js/demo-data.js','src/js/products.js','src/js/cart.js','src/js/wishlist.js','src/js/auth.js','src/js/search.js','src/js/main.js'];
+const jss = ['src/js/supabase.js','src/js/products.js','src/js/cart.js','src/js/wishlist.js','src/js/auth.js','src/js/search.js','src/js/main.js'];
 const csss = ['src/css/style.css','src/css/responsive.css','src/css/animations.css'];
 
 const jsAll = jss.map(p => readFileSync(join(ROOT,p),'utf8')).join('\n');
@@ -26,8 +26,8 @@ for (const page of pages) {
     }
   }
   // script order sanity
-  const order = [...html.matchAll(/src="[^"]*\/(env|supabase|demo-data|products|cart|wishlist|auth|search|main)\.js"/g)].map(m=>m[1]);
-  const want = ['env','supabase','demo-data','products','cart','wishlist','auth','search','main'];
+  const order = [...html.matchAll(/src="[^"]*\/(env|supabase|products|cart|wishlist|auth|search|main)\.js"/g)].map(m=>m[1]);
+  const want = ['env','supabase','products','cart','wishlist','auth','search','main'];
   const got = want.filter(w=>order.includes(w));
   if (JSON.stringify(got) !== JSON.stringify(order)) issues.push(`${page}: script order ${order.join(',')} != expected`);
   // root homepage must carry data-base="pages/"; inner pages intentionally don't (same-dir links)

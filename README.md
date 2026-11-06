@@ -17,8 +17,8 @@ npm run dev
 # ➜ http://localhost:5173
 ```
 
-Open the site in your browser. Without a connected backend the storefront automatically falls
-back to a **demo catalog** (identical shape to the live schema) so everything stays browsable.
+Open the site in your browser. Products, categories and orders are served live from Supabase —
+with no backend connected the grids keep their skeleton/empty states instead of demo data.
 
 ### Going live with Supabase (2 minutes)
 
@@ -82,7 +82,6 @@ the-original-fit/
 │   │   └── animations.css     ← reveals, hero entrance, skeletons, keyframes
 │   ├── js/
 │   │   ├── supabase.js        ← connection, env loading, platform APIs (orders/newsletter/contact)
-│   │   ├── demo-data.js       ← demo catalog fallback (mirrors the schema seed)
 │   │   ├── products.js        ← catalog layer + card rendering
 │   │   ├── cart.js            ← cart store (localStorage), cart page, checkout
 │   │   ├── wishlist.js        ← wishlist (localStorage + Supabase sync)

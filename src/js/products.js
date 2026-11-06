@@ -1,6 +1,6 @@
 /* ============================================================================
    THE ORIGINAL FIT — products.js
-   Catalog data layer (Supabase with DEMO fallback) + card rendering helpers.
+   Catalog data layer (Supabase only) + card rendering helpers.
    ============================================================================ */
 'use strict';
 
@@ -37,8 +37,6 @@ window.TOF = window.TOF || {};
     products: [],
     categories: [],
     loadPromise: null,
-    listeners: [],
-    demoSourced: false,
   };
 
   function applyRows(rows, cats) {
@@ -47,25 +45,6 @@ window.TOF = window.TOF || {};
     state.loaded = true;
     document.documentElement.classList.add('js-loaded');
   }
-
-  function demoRows() {
-    return {
-      rows: T.DEMO.products.map((row) => normalize(row)).filter(Boolean),
-      cats: T.DEMO.categories.map((c) => ({
-        id: c.id, slug: c.slug, name: c.name, imageUrl: c.image_url, description: c.description,
-      })),
-    };
-  }
-
-  function notifyListeners() {
-    state.listeners.forEach((fn) => { try { fn(); } catch (e) { /* keep rendering */ } });
-  }
-
-  /** Register a callback fired whenever the catalog data is replaced (demo → live). */
-  T.catalogChange = function catalogChange(fn) {
-    if (!state.listeners) state.listeners = [];
-    state.listeners.push(fn);
-  };
 
   async function refreshFromBackend() {
     await T.whenReady();
@@ -90,17 +69,8 @@ window.TOF = window.TOF || {};
           imageUrl: c.image_url || '', description: c.description || '',
         }));
       } else {
-        console.warn('[TOF] catalog fetch failed → demo fallback:', (p.error && p.error.message) || (c.error && c.error.message));
+        console.warn('[TOF] catalog fetch failed — catalog stays empty until Supabase responds:', (p.error && p.error.message) || (c.error && c.error.message));
       }
-    }
-
-    if (!rows.length) {
-      const d = demoRows();
-      rows = d.rows;
-      cats = d.cats;
-      state.demoSourced = true;
-    } else {
-      state.demoSourced = false;
     }
 
     applyRows(rows, cats);
@@ -110,28 +80,9 @@ window.TOF = window.TOF || {};
   async function loadOnce(force) {
     if (state.loaded && !force) return state;
     if (state.loadPromise && !force) return state.loadPromise;
-
-    if (T.mode === 'pending') {
-      /* Fast path: paint the demo catalog immediately so pages never sit
-         blank while Supabase init is pending; upgrade to live data in the
-         background once the mode settles. */
-      if (state.loaded) return state;
-      state.loadPromise = Promise.resolve(state);
-      state.demoSourced = true;
-      const d = demoRows();
-      applyRows(d.rows, d.cats);
-      T.ready.then(() => {
-        if (T.mode === 'supabase' && state.demoSourced) {
-          state.loadPromise = (async () => {
-            await refreshFromBackend();
-            notifyListeners();
-            return state;
-          })();
-        }
-      });
-      return state;
-    }
-
+    /* One fetch per page view — refreshFromBackend itself waits for the
+       Supabase connection to settle before querying. Pages render their
+       skeleton placeholders while this resolves. */
     state.loadPromise = refreshFromBackend();
     return state.loadPromise;
   }

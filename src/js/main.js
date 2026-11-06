@@ -313,14 +313,26 @@ window.TOF = window.TOF || {};
   /* ------------------------------------------------------------ home page -- */
   async function initHomePage() {
     const grid = qs('#home-grid');
-    if (!grid) return;
-    T.products.skeletonCards(grid, 4);
-    const items = await T.products.list({ sort: 'newest', limit: 4 });
-    await T.products.renderCards(grid, items);
-    /* demo → live swap */
-    T.catalogChange?.(() => {
-      T.products.list({ sort: 'newest', limit: 4 }).then((items2) => T.products.renderCards(grid, items2));
-    });
+    if (grid) {
+      T.products.skeletonCards(grid, 4);
+      const items = await T.products.list({ sort: 'newest', limit: 4 });
+      await T.products.renderCards(grid, items);
+    }
+
+    /* Our Collections — rendered live from the categories table */
+    const colGrid = qs('#home-collections');
+    if (colGrid) {
+      const cats = await T.products.categories();
+      colGrid.innerHTML = cats.map((c, i) => `
+        <a class="collection-card reveal" href="${SHOP_URL('category=' + c.slug)}" style="--d:${Math.min(i * 90, 360)}ms">
+          <img src="${c.imageUrl}" alt="${T.esc(c.name)} collection" loading="lazy">
+          <div class="cc-body">
+            <h3 class="cc-name">${T.esc(c.name)}</h3>
+            <span class="cc-link">Discover <span class="arrow">→</span></span>
+          </div>
+        </a>`).join('');
+      T.ui.observeReveals(colGrid);
+    }
   }
 
   /* ------------------------------------------------------------ shop page -- */
@@ -419,8 +431,6 @@ window.TOF = window.TOF || {};
     });
 
     await refresh();
-    /* demo → live swap */
-    T.catalogChange?.(() => refresh());
   }
 
   /* ------------------------------------------------------- product page -- */
@@ -522,8 +532,6 @@ window.TOF = window.TOF || {};
       T.ui.observeReveals(grid);
     };
     await paint();
-    /* demo → live swap */
-    T.catalogChange?.(() => paint());
   }
 
   /* --------------------------------------------------- contact/about page -- */
@@ -588,8 +596,8 @@ window.TOF = window.TOF || {};
     T.cart.initCartPage();
   }
 
-  /* Boot on DOM ready — the catalog fast-path renders demo data instantly and
-     upgrades to live Supabase data in the background (never blank pages). */
+  /* Boot on DOM ready — grid placeholders render while the catalog loads
+     from Supabase, then the live products/categories are painted in. */
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', boot);
   } else {

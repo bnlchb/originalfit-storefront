@@ -2,7 +2,7 @@
    THE ORIGINAL FIT — supabase.js
    - Shared namespace + tiny utilities
    - Supabase connection (env from src/js/env.js OR the dev-server /__/env.json)
-   - Graceful DEMO mode so the site is browsable before the backend is wired
+   - Catalog, cart and pages render empty/skeleton states until Supabase connects
    - Platform API surface: newsletter, contact, orders
    ============================================================================ */
 'use strict';
@@ -88,17 +88,17 @@ window.TOF = window.TOF || {};
           if (!error) {
             T.sb = client;
           } else {
-            console.warn('[TOF] Supabase schema unreachable → demo catalog. Run supabase/schema.sql:', error.message);
+            console.warn('[TOF] Supabase schema unreachable — run supabase/schema.sql:', error.message);
           }
         } catch (err) {
-          console.warn('[TOF] Supabase network error → demo catalog:', err && err.message);
+          console.warn('[TOF] Supabase network error — live catalog unavailable:', err && err.message);
         }
       }
     }
 
     T.mode = T.sb ? 'supabase' : 'demo';
     if (T.mode === 'demo') {
-      console.info('[TOF] DEMO CATALOG active — add credentials to .env and run supabase/schema.sql to go live.');
+      console.warn('[TOF] Supabase is not connected — products and categories load from the backend only. Set SUPABASE_URL / SUPABASE_ANON_KEY (env.js or your host env vars).');
     }
     resolveReady();
   }

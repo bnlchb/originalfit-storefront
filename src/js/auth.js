@@ -65,7 +65,7 @@ window.TOF = window.TOF || {};
   /* -------------------------------------------------------------- actions -- */
   function demoGuard() {
     if (T.mode !== 'demo') return null;
-    setTimeout(() => T.toast('Demo mode — add Supabase keys in .env to enable accounts.'), 0);
+    setTimeout(() => T.toast('Supabase is not connected — accounts need the backend (see README).'), 0);
     return { ok: false, demo: true };
   }
 
@@ -347,11 +347,6 @@ window.TOF = window.TOF || {};
 
   /* global wishlist re-render (e.g. heart removed while viewing account) */
   document.addEventListener('tof:wishlist', () => {
-    if (document.getElementById('page-account')) renderWishlistShelf();
-  });
-
-  /* demo → live swap */
-  T.catalogChange?.(() => {
     if (document.getElementById('page-account')) renderWishlistShelf();
   });
 
