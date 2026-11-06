@@ -88,7 +88,10 @@
             </div>
             <div class="field">
               <label for="gate-pw">Password</label>
-              <input id="gate-pw" name="password" type="password" autocomplete="current-password" placeholder="••••••••" required>
+              <div class="pw-wrap">
+                <input id="gate-pw" name="password" type="password" autocomplete="current-password" placeholder="••••••••" required>
+                <button class="pw-toggle" type="button" aria-label="Show password"></button>
+              </div>
             </div>
             <p class="form-error" id="gate-error" hidden></p>
             <button class="btn" type="submit" id="gate-submit">Enter Admin Console</button>

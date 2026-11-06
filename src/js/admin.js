@@ -107,6 +107,21 @@ window.TOF = window.TOF || {};
     const loginLink = document.getElementById('gate-login-link');
     if (loginLink) loginLink.href = T.url('login.html?next=' + encodeURIComponent('admin.html'));
 
+    // show / hide password (eye button)
+    const pwWrap = document.querySelector('#gate-form .pw-wrap');
+    if (pwWrap) {
+      const input = pwWrap.querySelector('input');
+      const toggle = pwWrap.querySelector('.pw-toggle');
+      if (input && toggle) {
+        toggle.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="2.6"/></svg>';
+        toggle.addEventListener('click', () => {
+          const show = input.type === 'password';
+          input.type = show ? 'text' : 'password';
+          toggle.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+        });
+      }
+    }
+
     const form = document.getElementById('gate-form');
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
