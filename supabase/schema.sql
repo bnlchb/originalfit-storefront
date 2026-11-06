@@ -306,9 +306,9 @@ create policy "storage_authenticated_delete" on storage.objects
   using (bucket_id in ('product-images', 'collection-images'));
 
 -- ============================================================================
--- 10. SEED — collections & products
---     (image URLs point at hosted fashion photography; swap in your own
---      Supabase Storage URLs by uploading to product-images bucket)
+-- 10. SEED — collections (only)
+--     The catalog starts EMPTY: create real products from the admin console
+--     (with Supabase Storage uploads) so the site serves backend data only.
 -- ============================================================================
 
 insert into public.categories (slug, name, image_url, description) values
@@ -325,69 +325,6 @@ insert into public.categories (slug, name, image_url, description) values
    'https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=1200&auto=format&fit=crop',
    'Heavyweight comfort layers built for every day.')
 on conflict (slug) do nothing;
-
-insert into public.products
-  (name, description, price, original_price, image_url, category_id, stock, is_new, is_best_seller, is_active, created_at)
-values
-  ('Classic Logo Tee',
-   'Our foundational piece. 100% heavyweight cotton jersey, boxy relaxed fit, tonal chest logo. Washed for unbeatable softness from day one.',
-   24.99, null,
-   'https://images.unsplash.com/photo-1562157873-818bc0726f68?q=80&w=1100&auto=format&fit=crop',
-   (select id from public.categories where slug = 'streetwear'), 42, true, true, true, now() - interval '0 days'),
-
-  ('Minimal Tee',
-   'The quiet essential. Pima cotton, fitted cut, tiny embroidered wordmark at the hem. Wears as good under a jacket as on its own.',
-   22.99, null,
-   'https://images.unsplash.com/photo-1581655353564-df123a1eb820?q=80&w=1100&auto=format&fit=crop',
-   (select id from public.categories where slug = 'minimalist'), 58, true, false, true, now() - interval '1 day'),
-
-  ('Signature Tee',
-   'The one that started THE ORIGINAL FIT. Garment-dyed cotton, dropped shoulders, screen-printed signature logo across the back.',
-   24.99, 29.99,
-   'https://images.unsplash.com/photo-1592728036073-d0ae31a18fdc?q=80&w=1100&auto=format&fit=crop',
-   (select id from public.categories where slug = 'streetwear'), 36, false, true, true, now() - interval '2 days'),
-
-  ('Essential Tee',
-   'A masterclass in restraint. Midweight organic cotton, straight hem, zero branding. The tee you will search for every laundry day.',
-   22.99, null,
-   'https://images.unsplash.com/photo-1576417677416-6ca3adfb5435?q=80&w=1100&auto=format&fit=crop',
-   (select id from public.categories where slug = 'minimalist'), 64, false, false, true, now() - interval '3 days'),
-
-  ('Essential Logo Tee — Black',
-   'Deep matte black version of our classic logo tee. Premium combed cotton holds color through every wash.',
-   24.99, null,
-   'https://images.unsplash.com/photo-1604897391146-c98ab268e252?q=80&w=1100&auto=format&fit=crop',
-   (select id from public.categories where slug = 'streetwear'), 30, false, false, true, now() - interval '5 days'),
-
-  ('Everyday Logo Tee',
-   'Built for rotation. Slightly longer body, ribbed collar that keeps its shape, subtle left-chest print.',
-   23.99, null,
-   'https://images.unsplash.com/photo-1622445272461-c6580cab8755?q=80&w=1100&auto=format&fit=crop',
-   (select id from public.categories where slug = 'streetwear'), 51, false, false, true, now() - interval '8 days'),
-
-  ('Studio Essential Tee',
-   'Awfully soft organic cotton tee — cut with a straight drape and finished with tonal stitching. Styled for minimalists.',
-   19.99, 24.99,
-   'https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?q=80&w=1100&auto=format&fit=crop',
-   (select id from public.categories where slug = 'minimalist'), 73, false, false, true, now() - interval '9 days'),
-
-  ('OG Monochrome Hoodie',
-   'Blanket-heavy 420gsm fleece with double-lined hood, kangaroo pocket and tonal embroidery. Your year-round layer.',
-   49.99, 59.99,
-   'https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=1100&auto=format&fit=crop',
-   (select id from public.categories where slug = 'hoodies'), 24, false, true, true, now() - interval '11 days'),
-
-  ('Heavyweight Grey Hoodie',
-   'Our heaviest build yet — 480gsm brushed fleece, oversized cut, metal-tipped drawcords. Offers warm forever.',
-   54.99, 64.99,
-   'https://images.unsplash.com/photo-1611817757591-c3f345024273?q=80&w=1100&auto=format&fit=crop',
-   (select id from public.categories where slug = 'hoodies'), 18, true, false, true, now() - interval '14 days'),
-
-  ('Off-Duty Hoodie',
-   'Thrown on with everything. Loopback cotton fleece, lived-in softness, relaxed raglan sleeves with hidden side pockets.',
-   52.99, null,
-   'https://images.unsplash.com/photo-1738486260590-23c954cf29b8?q=80&w=1100&auto=format&fit=crop',
-   (select id from public.categories where slug = 'hoodies'), 27, false, false, true, now() - interval '16 days');
 
 -- ============================================================================
 -- DONE. RLS is on; the anon key can safely ship to the browser.

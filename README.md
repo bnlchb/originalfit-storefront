@@ -24,8 +24,9 @@ with no backend connected the grids keep their skeleton/empty states instead of 
 
 1. Create a project on [supabase.com](https://supabase.com).
 2. Open **SQL Editor → New query**, paste the whole of [`supabase/schema.sql`](supabase/schema.sql) → **Run**.
-   This creates all tables, RLS policies, auth triggers, storage buckets **and the seed data**
-   (3 collections / 10 products).
+   This creates all tables, RLS policies, auth triggers, storage buckets **and the collection seed**
+   (3 collections). The product catalog starts **empty** — add your real products from the
+   admin console afterwards, so the site serves backend data only.
    > The script starts by dropping the legacy tables from the previous Originalfit storefront
    > (`products`, `categories`, `selections`, `selection_items`, `sizes`). Keep that block in
    > unless you still need those tables.
@@ -91,7 +92,8 @@ the-original-fit/
 │   └── assets/icons/          ← favicon & inline icon set
 │
 ├── supabase/
-│   └── schema.sql             ← tables + RLS + triggers + storage + seed data
+│   ├── schema.sql             ← tables + RLS + triggers + storage + collection seed
+│   └── migrations/            ← forward-only SQL changes for existing installs
 │
 └── scripts/
     ├── dev-server.mjs         ← zero-dependency static server (serves /__/env.json)

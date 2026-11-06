@@ -240,6 +240,27 @@ window.TOF = window.TOF || {};
     }, { once: true });
   }
 
+  /* ------------------------------------------------ catalog validation -- */
+  /* Cart lines capture name/price/image at add-time. If a product is deleted
+     or deactivated in the backend, the line becomes a ghost: it renders from
+     the snapshot and fails checkout with an FK error. Re-resolve against the
+     live catalog once when the page boots and drop anything not in it. */
+  async function pruneAgainstCatalog() {
+    try {
+      await T.whenReady();
+      if (T.mode !== 'supabase' || !T.products) return; // backend down → never nuke the local cart
+      const live = await T.products.list({});
+      const valid = new Set(live.map((p) => Number(p.id)));
+      const known = items.filter((it) => valid.has(Number(it.id)));
+      if (known.length === items.length) return;
+      const dropped = items.length - known.length;
+      items = known;
+      save(); emit();
+      T.toast(`${dropped} item${dropped === 1 ? '' : 's'} no longer available — removed from your cart.`);
+    } catch { /* best-effort; the cart keeps working locally */ }
+  }
+  pruneAgainstCatalog();
+
   T.cart = {
     add, setQty, setSize, remove, clear, read, count, subtotal, shipping, total, freeShippingAt,
     initCartPage, itemHTML, SIZES,
