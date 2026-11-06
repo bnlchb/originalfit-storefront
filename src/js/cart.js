@@ -204,7 +204,7 @@ window.TOF = window.TOF || {};
       btn.innerHTML = '<span class="spinner"></span> Placing order…';
 
       const shippingCost = shipping();
-      const res = await T.api.createOrder({
+      let res = await T.api.createOrder({
         userId: user ? user.id : null,
         total: subtotal() + shippingCost,
         address: {
@@ -213,6 +213,22 @@ window.TOF = window.TOF || {};
         },
         items,
       });
+
+      /* If the stored sign-in session was expired when the customer pressed
+         submit, the first attempt dies with a JWT error. Retry ONCE as a
+         guest order — never block a purchase on account plumbing. */
+      if (!res.ok && user && /jwt|session|token|401/i.test(String((res.error && res.error.message) || ''))) {
+        console.warn('[TOF] sign-in session expired mid-checkout — retrying as guest.');
+        res = await T.api.createOrder({
+          userId: null,
+          total: subtotal() + shippingCost,
+          address: {
+            full_name: data.full_name, phone: data.phone || '', email: data.email || '',
+            address: data.address, city: data.city, zip: data.zip, country: data.country || 'Morocco',
+          },
+          items,
+        });
+      }
 
       if (!res.ok) {
         btn.disabled = false;
