@@ -1,0 +1,243 @@
+/* ============================================================================
+   THE ORIGINAL FIT — admin.css
+   Styles for pages/admin.html only (classes prefixed .admin-* / .prod-* /
+   .oa-* stay console-scoped so the storefront CSS is untouched).
+   ============================================================================ */
+
+/* topbar: stats + toolbar ----------------------------------------------------- */
+.admin-topbar {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: .8rem;
+}
+
+.admin-stats {
+  display: flex;
+  gap: .8rem;
+  flex-wrap: wrap;
+}
+
+.stat {
+  min-width: 128px;
+  padding: .8rem 1rem;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-1);
+  display: flex;
+  flex-direction: column;
+  gap: .2rem;
+}
+
+.stat-n { font-weight: 900; font-size: 1.5rem; line-height: 1; letter-spacing: -.02em; }
+.stat-l {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.btn-row { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; margin-top: .8rem; }
+
+.admin-who {
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  margin: .2rem 0 1.4rem;
+}
+
+/* header chip ------------------------------------------------------------------ */
+.admin-chip {
+  color: var(--ink);
+  border: 1px solid var(--line-dark);
+  border-radius: var(--radius-pill);
+  padding: .34em .9em;
+}
+
+/* gate -------------------------------------------------------------------------- */
+.admin-gate { max-width: 560px; }
+.admin-gate .form-grid { margin-top: 1rem; }
+.admin-gate .btn { justify-self: start; }
+
+.admin-note { color: var(--muted); margin-top: .4rem; }
+
+.admin-mini {
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  margin-top: .9rem;
+}
+.admin-mini code { background: var(--bg-alt); padding: .06em .4em; border-radius: 4px; }
+.admin-mini .u { text-decoration: underline; text-underline-offset: 3px; }
+
+/* tabs --------------------------------------------------------------------------- */
+.admin-tabs {
+  display: flex;
+  gap: .45rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.4rem;
+}
+
+.tab-btn {
+  padding: .55em 1.3em;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  font-weight: 700;
+  font-size: var(--fs-sm);
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color: var(--muted);
+  transition: all .18s var(--ease);
+}
+
+.tab-btn:hover { color: var(--ink); border-color: var(--line-dark); }
+.tab-btn.is-on { background: var(--ink); border-color: var(--ink); color: var(--white); }
+
+/* panels + toolbars ---------------------------------------------------------------- */
+.admin-toolbar {
+  display: flex;
+  align-items: center;
+  gap: .8rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.admin-note-inline { color: var(--muted); font-size: var(--fs-sm); }
+
+.admin-search {
+  flex: 1 1 220px;
+  max-width: 360px;
+  padding: .55em .9em;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--white);
+  outline: none;
+}
+.admin-search:focus { border-color: var(--ink); }
+
+/* products table --------------------------------------------------------------------- */
+.table-scroll { overflow-x: auto; background: var(--white); border: 1px solid var(--line); border-radius: var(--radius-lg); box-shadow: var(--shadow-1); }
+
+.admin-table { width: 100%; border-collapse: collapse; min-width: 640px; }
+
+.admin-table th {
+  text-align: left;
+  font-size: var(--fs-xs);
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: .8em .9em;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.admin-table td {
+  padding: .7em .9em;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+
+.admin-table tr:last-child td { border-bottom: 0; }
+.admin-table .th-actions, .admin-table .td-actions { text-align: right; white-space: nowrap; }
+
+.thumb {
+  width: 52px;
+  height: 52px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  background: var(--grey-product);
+}
+.thumb-empty { display: inline-block; }
+
+.cell-strong { font-weight: 700; }
+.cell-muted { color: var(--muted); font-size: var(--fs-sm); }
+
+/* action buttons in tables/cards ------------------------------------------------------- */
+.x-btn {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: .4em .9em;
+  border: 1px solid var(--line-dark);
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  color: var(--ink);
+  transition: all .15s var(--ease);
+  margin-left: .35rem;
+}
+.x-btn:hover { background: var(--ink); color: var(--white); }
+.x-btn.is-danger { border-color: #b3261e; color: #b3261e; }
+.x-btn.is-danger:hover { background: #b3261e; color: var(--white); }
+.x-btn:first-child { margin-left: 0; }
+
+/* product form --------------------------------------------------------------------------- */
+.prod-form { margin-bottom: 1.2rem; }
+.prod-form h3 { margin-bottom: .9rem; }
+.prod-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+.field-wide { grid-column: 1 / -1; }
+
+.img-preview {
+  max-width: 120px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+}
+
+.checks-row { display: flex; gap: 1.4rem; flex-wrap: wrap; margin: .3rem 0 .4rem; }
+
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: .45em;
+  font-size: var(--fs-sm);
+  color: var(--ink);
+}
+
+textarea { border-radius: var(--radius-sm); }
+
+/* categories ------------------------------------------------------------------------------- */
+.admin-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.cat-card { display: flex; flex-direction: column; gap: .45rem; }
+.cat-card h3 { font-size: var(--fs-md); }
+.cat-img { height: 120px; width: 100%; object-fit: cover; border-radius: var(--radius-sm); }
+.cat-desc { color: var(--muted); font-size: var(--fs-sm); }
+
+/* orders -------------------------------------------------------------------------------------- */
+.order-admin .oa-addr { color: var(--muted); font-size: var(--fs-sm); margin-top: .5rem; }
+
+.oa-status {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  margin-top: .7rem;
+}
+
+.oa-status label {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.oa-status select { min-width: 160px; }
+
+/* messages -------------------------------------------------------------------------------------- */
+.msg-card .msg-body {
+  margin: .65rem 0;
+  padding: .7rem .9rem;
+  background: var(--bg-alt);
+  border-radius: var(--radius-sm);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

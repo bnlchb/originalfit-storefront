@@ -1,0 +1,88 @@
+/* ============================================================================
+   THE ORIGINAL FIT — animations.css
+   Subtle, elegant motion design. Honors prefers-reduced-motion.
+   ============================================================================ */
+
+/* ---------------------------------------------------------------- keyframes -- */
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+@keyframes cue {
+  0%, 100% { transform: translateY(0); opacity: 1; }
+  50%      { transform: translateY(4px); opacity: .55; }
+}
+@keyframes bump {
+  0%   { transform: scale(1); }
+  35%  { transform: scale(1.4); }
+  100% { transform: scale(1); }
+}
+@keyframes pop {
+  0%   { transform: scale(.5); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes pageIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes heroIn {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* --------------------------------------------------------------- page enter -- */
+body { animation: pageIn .45s var(--ease) both; }
+
+main { animation: pageIn .55s var(--ease) both; }
+
+/* hero content entrance (slight cascade) */
+.hero-kicker   { animation: heroIn .7s var(--ease) .05s both; }
+.hero-title    { animation: heroIn .7s var(--ease) .12s both; }
+.hero-subtitle { animation: heroIn .7s var(--ease) .2s both; }
+.hero-lead     { animation: heroIn .7s var(--ease) .27s both; }
+.hero-cta      { animation: heroIn .7s var(--ease) .34s both; }
+.hero-scroll   { animation: heroIn .7s var(--ease) .45s both; }
+.hero-rail     { animation: heroIn .7s var(--ease) .5s both; }
+
+/* ------------------------------------------------------- scroll reveals IO -- */
+.reveal {
+  opacity: 0;
+  transform: translateY(26px);
+  transition:
+    opacity .8s var(--ease) var(--d, 0ms),
+    transform .8s var(--ease) var(--d, 0ms);
+  will-change: opacity, transform;
+}
+.reveal.in-view {
+  opacity: 1;
+  transform: none;
+}
+
+/* product cards stagger via --d inline style set by JS */
+.product-card.reveal { transform: translateY(22px); }
+.product-card.reveal.in-view { transform: none; }
+
+/* -------------------------------------------------------------- utilities -- */
+.spinner {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, .35);
+  border-top-color: #fff;
+  animation: spin .7s linear infinite;
+  display: inline-block;
+}
+
+/* ------------------------------------------------- reduced motion respect -- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .reveal { opacity: 1; transform: none; }
+  .badge, .wish-btn { opacity: 1; transform: none; }
+}

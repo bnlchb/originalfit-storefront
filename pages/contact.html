@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0a0a0a">
+  <meta name="description" content="Contact THE ORIGINAL FIT — questions on orders, sizes, returns.">
+  <title>Contact — THE ORIGINAL FIT</title>
+  <link rel="icon" type="image/svg+xml" href="../src/assets/icons/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../src/css/style.css">
+  <link rel="stylesheet" href="../src/css/responsive.css">
+  <link rel="stylesheet" href="../src/css/animations.css">
+</head>
+<body class="page-solid" data-page="contact">
+
+  <!-- ═══════════════ announcement bar ═══════════════ -->
+  <div class="announcement" id="announcement">
+    <div class="container announcement-in">
+      <p class="announcement-msg">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.6"/><circle cx="17.5" cy="18" r="1.6"/></svg>
+        Free shipping on orders over $50
+      </p>
+      <nav class="announcement-links" aria-label="Support">
+        <a href="#faq">Track Order</a>
+        <a href="#faq">Help</a>
+      </nav>
+    </div>
+  </div>
+
+  <!-- ═══════════════ header ═══════════════ -->
+  <header class="site-header" id="site-header">
+    <div class="container header-in">
+      <button class="hamburger" id="hamburger" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">
+        <span></span><span></span><span></span>
+      </button>
+      <a class="logo" href="../index.html" data-nav="contact">THE <b>ORIGINAL&nbsp;FIT</b></a>
+      <nav class="main-nav" aria-label="Main navigation">
+        <a href="../index.html" data-nav="home">Home</a>
+        <a href="shop.html" data-nav="shop">Shop</a>
+        <a href="collections.html" data-nav="collections">Collections</a>
+        <a href="about.html" data-nav="about">About</a>
+        <a href="contact.html" data-nav="contact">Contact</a>
+      </nav>
+      <div class="header-actions">
+        <button class="icon-btn" data-open-search aria-label="Search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4.1-4.1"/></svg>
+        </button>
+        <a class="icon-btn" data-auth-link href="login.html" title="Sign in" aria-label="Account">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c.8-3.6 3.3-5.5 8-5.5s7.2 1.9 8 5.5"/></svg>
+        </a>
+        <button class="icon-btn" id="cart-open" aria-label="Shopping cart">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8V6a6 6 0 0 1 12 0v2"/><path d="M4 8h16l-1.1 11.3a1.5 1.5 0 0 1-1.5 1.6H6.6a1.5 1.5 0 0 1-1.5-1.6z"/></svg>
+          <span class="cart-count" id="cart-count" hidden>0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══════════════ mobile menu ═══════════════ -->
+  <nav class="mobile-menu" id="mobile-menu" aria-label="Mobile navigation">
+    <a class="mm-link" href="../index.html">Home <span class="arrow">↓</span></a>
+    <a class="mm-link" href="shop.html">Shop <span class="arrow">↓</span></a>
+    <a class="mm-link" href="collections.html">Collections <span class="arrow">↓</span></a>
+    <a class="mm-link" href="about.html">About <span class="arrow">↓</span></a>
+    <a class="mm-link" href="contact.html">Contact <span class="arrow">↓</span></a>
+    <div class="mm-meta">
+      <div class="mm-actions">
+        <button class="btn btn-outline btn-sm" data-open-search>Search</button>
+        <a class="btn btn-sm" data-cart-link href="cart.html">Cart</a>
+      </div>
+      <a class="mm-note" data-auth-link href="login.html">Account / Sign in</a>
+    </div>
+  </nav>
+
+  <!-- ═══════════════ search overlay ═══════════════ -->
+  <div class="search-overlay" id="search-overlay" role="dialog" aria-modal="true" aria-label="Search products">
+    <div class="search-shell">
+      <form class="search-head" id="search-form" role="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4.1-4.1"/></svg>
+        <input id="search-input" type="search" placeholder="Search products…" autocomplete="off" aria-label="Search products">
+        <button class="search-close" id="search-close" type="button" aria-label="Close search">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"/></svg>
+        </button>
+      </form>
+      <p class="search-hint">Try “tee”, “hoodie”, “minimal” — press ESC to close</p>
+      <div class="search-results" id="search-results" hidden></div>
+    </div>
+  </div>
+
+  <main class="page-wrap">
+
+    <div class="page-head">
+      <div class="container">
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+          <a href="../index.html">Home</a>
+          <span class="sep">/</span>
+          <span class="current">Contact</span>
+        </nav>
+        <h1>Contact Us</h1>
+      </div>
+    </div>
+
+    <section class="section tight" style="padding-top:0">
+      <div class="container contact-grid">
+        <div class="contact-info reveal">
+          <div class="contact-block">
+            <h3>Email</h3>
+            <a href="mailto:hello@theoriginalfit.com">hello@theoriginalfit.com</a>
+            <p style="font-size:.85rem;color:var(--muted);font-weight:400;margin-top:.35rem">We reply within 1 business day.</p>
+          </div>
+          <div class="contact-block">
+            <h3>Hours</h3>
+            <div class="hours-line"><b>Mon – Fri</b><span>9:00 – 18:00</span></div>
+            <div class="hours-line"><b>Saturday</b><span>10:00 – 16:00</span></div>
+            <div class="hours-line"><b>Sunday</b><span>Closed</span></div>
+          </div>
+          <div class="contact-block">
+            <h3>Social</h3>
+            <ul>
+              <li><a href="https://www.instagram.com/the_original_fit/" target="_blank" rel="noreferrer">Instagram ↗</a></li>
+              <li><a href="https://www.tiktok.com/@theoriginalfit" target="_blank" rel="noreferrer">TikTok ↗</a></li>
+              <li><a href="https://www.youtube.com/@theoriginalfit" target="_blank" rel="noreferrer">YouTube ↗</a></li>
+              <li><a href="https://x.com/theoriginalfit" target="_blank" rel="noreferrer">X ↗</a></li>
+            </ul>
+          </div>
+          <div class="contact-block">
+            <h3>Newsletter</h3>
+            <div class="f-news" style="margin-top:.3rem">
+              <form id="newsletter-form" class="news-form" novalidate>
+                <input type="email" name="email" placeholder="Your email address" aria-label="Email address" required>
+                <button class="btn btn-sm" type="submit">Subscribe</button>
+              </form>
+              <p class="news-note" style="color:var(--muted-light)">Exclusive offers, no spam.</p>
+            </div>
+          </div>
+        </div>
+
+        <form id="contact-form" class="panel-card form-grid reveal" style="--d:80ms" novalidate>
+          <div class="form-row">
+            <div class="field">
+              <label for="cf-name">Full Name *</label>
+              <input id="cf-name" name="name" type="text" placeholder="Your name" autocomplete="name" required>
+            </div>
+            <div class="field">
+              <label for="cf-email">Email *</label>
+              <input id="cf-email" name="email" type="email" placeholder="you@example.com" autocomplete="email" required>
+            </div>
+          </div>
+          <div class="field">
+            <label for="cf-subject">Subject</label>
+            <select id="cf-subject" name="subject">
+              <option>General</option>
+              <option>Order Support</option>
+              <option>Returns & Exchanges</option>
+              <option>Press / Collaboration</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="cf-message">Message *</label>
+            <textarea id="cf-message" name="message" placeholder="How can we help?" required></textarea>
+          </div>
+          <p class="form-error" id="contact-error" hidden></p>
+          <button class="btn" type="submit">Send Message <span class="arrow">→</span></button>
+        </form>
+
+        <div class="panel-card" id="contact-success" hidden style="justify-items:center;text-align:center;grid-column:2">
+          <div class="order-success" style="padding:1.4rem 0 0">
+            <span class="ring" aria-hidden="true">✓</span>
+            <h2>Message Sent</h2>
+            <p style="color:var(--muted);max-width:34ch">Thanks for reaching out — our team will reply within one business day.</p>
+            <a href="#" id="contact-again" class="link-arrow">Send Another <span class="arrow">→</span></a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="section" id="faq" style="scroll-margin-top:80px">
+      <div class="container">
+        <div class="section-head reveal">
+          <div>
+            <p class="kicker">Support</p>
+            <h2>Frequently Asked Questions</h2>
+          </div>
+        </div>
+        <div class="faq-list reveal">
+          <div class="faq-item">
+            <details>
+              <summary>How do I track my order?</summary>
+              <div class="faq-body">
+                Once your order ships you receive a confirmation email with a tracking link. You can also see the status of your latest orders under <a href="account.html">My Account → Orders</a>.
+              </div>
+            </details>
+          </div>
+          <div class="faq-item">
+            <details>
+              <summary>When do I get free shipping?</summary>
+              <div class="faq-body">
+                All orders over $50 ship free within the US. Orders below that ship for a flat $6.99.
+              </div>
+            </details>
+          </div>
+          <div class="faq-item">
+            <details>
+              <summary>What is your return policy?</summary>
+              <div class="faq-body">
+                30 days from delivery, unworn with tags attached. Exchanges are free; refunds are issued to the original payment method within 5 business days of inspection.
+              </div>
+            </details>
+          </div>
+          <div class="faq-item">
+            <details>
+              <summary>How do THE ORIGINAL FIT tees fit?</summary>
+              <div class="faq-body">
+                Our tees are true-to-size with a slightly relaxed body. For an oversized drape, size up once. All measurements are printed on every product page under Product Details.
+              </div>
+            </details>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ═══════════════ footer ═══════════════ -->
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="f-brand">
+        <a class="logo light" href="../index.html">THE ORIGINAL&nbsp;FIT</a>
+        <p>Wear Your Style.</p>
+      </div>
+      <nav class="f-col" aria-label="Footer links">
+        <h4 class="f-title">Links</h4>
+        <ul>
+          <li><a href="../index.html">Home</a></li>
+          <li><a href="shop.html">Shop</a></li>
+          <li><a href="collections.html">Collections</a></li>
+          <li><a href="about.html">About</a></li>
+          <li><a href="contact.html">Contact</a></li>
+        </ul>
+      </nav>
+      <div class="f-col">
+        <h4 class="f-title">Follow Us</h4>
+        <ul>
+          <li><a href="https://www.instagram.com/the_original_fit/" target="_blank" rel="noreferrer">Instagram ↗</a></li>
+          <li><a href="https://www.tiktok.com/@theoriginalfit" target="_blank" rel="noreferrer">TikTok ↗</a></li>
+          <li><a href="https://www.youtube.com/@theoriginalfit" target="_blank" rel="noreferrer">YouTube ↗</a></li>
+          <li><a href="https://x.com/theoriginalfit" target="_blank" rel="noreferrer">X ↗</a></li>
+        </ul>
+      </div>
+      <div class="f-news">
+        <h4 class="f-title">Newsletter</h4>
+        <p>Subscribe to our newsletter for exclusive offers.</p>
+        <form id="newsletter-form-footer" class="news-form" data-newsletter novalidate>
+          <input type="email" name="email" placeholder="Your email address" aria-label="Email address" required>
+          <button class="btn btn-light btn-sm" type="submit">Subscribe</button>
+        </form>
+        <p class="news-note">No spam. Unsubscribe anytime.</p>
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <p>© <span id="year">2024</span> THE ORIGINAL FIT. All rights reserved.</p>
+      <nav aria-label="Legal">
+        <a href="about.html#privacy">Privacy Policy</a>
+        <span class="sep">|</span>
+        <a href="about.html#terms">Terms of Service</a>
+        <span class="sep">|</span>
+        <a href="contact.html#faq">FAQ</a>
+      </nav>
+    </div>
+  </footer>
+
+  <!-- ═══════════════ cart drawer ═══════════════ -->
+  <div class="drawer-backdrop" id="drawer-backdrop"></div>
+  <aside class="cart-drawer" id="cart-drawer" role="dialog" aria-modal="true" aria-label="Shopping cart">
+    <header class="cd-head">
+      <h2 class="cd-title">Cart <span id="drawer-count">(0)</span></h2>
+      <button class="cd-close" id="cd-close" aria-label="Close cart">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"/></svg>
+      </button>
+    </header>
+    <div class="cd-ship"><div id="cart-ship-note"><b>Free shipping on orders over $50</b></div></div>
+    <div class="cd-items" id="cart-items"></div>
+    <footer class="cd-foot">
+      <div class="cd-subtotal"><span>Subtotal</span><b id="drawer-subtotal">$0.00</b></div>
+      <div class="cd-actions">
+        <a class="btn btn-outline" data-cart-link href="cart.html">View Cart</a>
+        <a class="btn" data-cart-link href="cart.html">Checkout</a>
+      </div>
+      <p class="cd-hint">Shipping is calculated at checkout.</p>
+    </footer>
+  </aside>
+
+  <div class="toast-wrap" id="toast-wrap"></div>
+
+  <script src="../src/js/env.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="../src/js/supabase.js" defer></script>
+  <script src="../src/js/demo-data.js" defer></script>
+  <script src="../src/js/products.js" defer></script>
+  <script src="../src/js/cart.js" defer></script>
+  <script src="../src/js/wishlist.js" defer></script>
+  <script src="../src/js/auth.js" defer></script>
+  <script src="../src/js/search.js" defer></script>
+  <script src="../src/js/main.js" defer></script>
+</body>
+</html>

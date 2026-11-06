@@ -1,0 +1,58 @@
+# Publish THE ORIGINAL FIT to GitHub Pages.
+# The repo root IS the site (static files). Credentials are never committed and
+# no .env is needed in CI: src/js/env.js is generated at build time from the
+# SUPABASE_URL / SUPABASE_ANON_KEY repository secrets (Settings → Secrets and
+# variables → Actions). Any .env / secret files are stripped defensively.
+name: Deploy site to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate src/js/env.js from deploy secrets
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: npm run env:sync
+
+      - name: Assemble artifact (site content at artifact root)
+        run: |
+          mkdir -p _site
+          cp -r ./[^.]* _site/
+          rm -f _site/.env
+          find _site -name '.env*' -not -name '.nojekyll' -delete
+          touch _site/.nojekyll
+
+      - name: Configure Pages (auto-enable on first run)
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - id: deployment
+        name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4

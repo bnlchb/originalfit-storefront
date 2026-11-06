@@ -1,0 +1,24 @@
+# Environment / secrets
+# (.env holds the real credentials — never commit. src/js/env.js is GENERATED
+#  by `npm run env:sync` from .env / deploy secrets and is git-ignored as well,
+#  so no credential is ever hard-coded in the repository.)
+.env
+
+# Generated env file — regenerated at build time from .env / CI secrets
+/src/js/env.js
+
+# Dependencies
+node_modules/
+
+# System files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor
+.vscode/
+.idea/

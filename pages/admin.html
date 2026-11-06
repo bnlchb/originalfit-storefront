@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0a0a0a">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="description" content="Site administration — THE ORIGINAL FIT.">
+  <title>Admin Console — THE ORIGINAL FIT</title>
+  <link rel="icon" type="image/svg+xml" href="../src/assets/icons/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../src/css/style.css">
+  <link rel="stylesheet" href="../src/css/responsive.css">
+  <link rel="stylesheet" href="../src/css/animations.css">
+  <link rel="stylesheet" href="../src/css/admin.css">
+</head>
+<body class="page-solid" data-page="admin">
+
+  <!-- ═══════════════ announcement bar ═══════════════ -->
+  <div class="announcement" id="announcement">
+    <div class="container announcement-in">
+      <p class="announcement-msg">Administration — internal use only</p>
+      <nav class="announcement-links" aria-label="Shop">
+        <a href="shop.html">Storefront</a>
+        <a href="account.html">My Account</a>
+      </nav>
+    </div>
+  </div>
+
+  <!-- ═══════════════ header ═══════════════ -->
+  <header class="site-header" id="site-header">
+    <div class="container header-in">
+      <button class="hamburger" id="hamburger" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">
+        <span></span><span></span><span></span>
+      </button>
+      <a class="logo" href="../index.html">THE <b>ORIGINAL&nbsp;FIT</b></a>
+      <nav class="main-nav" aria-label="Main navigation">
+        <a href="../index.html">Home</a>
+        <a href="shop.html">Shop</a>
+        <a href="collections.html">Collections</a>
+        <a href="account.html">Account</a>
+      </nav>
+      <div class="header-actions">
+        <span class="admin-chip kicker" id="header-chip" hidden>Admin</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══════════════ mobile menu ═══════════════ -->
+  <nav class="mobile-menu" id="mobile-menu" aria-label="Mobile navigation">
+    <a class="mm-link" href="../index.html">Home <span class="arrow">↓</span></a>
+    <a class="mm-link" href="shop.html">Shop <span class="arrow">↓</span></a>
+    <a class="mm-link" href="collections.html">Collections <span class="arrow">↓</span></a>
+    <a class="mm-link" href="account.html">Account <span class="arrow">↓</span></a>
+  </nav>
+
+  <main class="page-wrap">
+
+    <div class="page-head">
+      <div class="container">
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+          <a href="../index.html">Home</a>
+          <span class="sep">/</span>
+          <span class="current">Admin</span>
+        </nav>
+        <h1>Site Administration</h1>
+      </div>
+    </div>
+
+    <section class="section tight" style="padding-top:0">
+      <div class="container" id="admin-root">
+
+        <!-- boot status -->
+        <div id="admin-loading" class="panel-card">
+          <p class="admin-note"><span class="spinner"></span> Checking your access…</p>
+        </div>
+
+        <!-- gate: not signed in -->
+        <div class="panel-card admin-gate" id="admin-gate" hidden>
+          <h2>Admin Sign In</h2>
+          <p class="admin-note">Sign in with your administrator email and password.</p>
+          <form id="gate-form" class="form-grid" novalidate>
+            <div class="field">
+              <label for="gate-email">Email</label>
+              <input id="gate-email" name="email" type="email" autocomplete="email" placeholder="admin@example.com" required>
+            </div>
+            <div class="field">
+              <label for="gate-pw">Password</label>
+              <input id="gate-pw" name="password" type="password" autocomplete="current-password" placeholder="••••••••" required>
+            </div>
+            <p class="form-error" id="gate-error" hidden></p>
+            <button class="btn" type="submit" id="gate-submit">Enter Admin Console</button>
+          </form>
+          <p class="admin-mini">No admin account yet? Supabase Dashboard → Authentication → Users →
+            <b>Add user</b> (enable <i>Auto Confirm</i>), then promote it by running the UPDATE
+            at the bottom of <code>supabase/admin.sql</code>.</p>
+          <p class="admin-mini">Prefer the storefront sign-in? <a class="u" id="gate-login-link" href="login.html">Go to login page</a></p>
+        </div>
+
+        <!-- gate: signed in but not admin -->
+        <div class="panel-card admin-gate" id="admin-denied" hidden>
+          <h2>Not an administrator</h2>
+          <p class="admin-note" id="denied-msg">You are signed in, but this account has no admin rights.</p>
+          <p class="admin-note">Run the promotion UPDATE from <code>supabase/admin.sql</code> (step 7)
+            for this account's email, then press “Re-check access”.</p>
+          <div class="btn-row">
+            <button class="btn btn-outline btn-sm" id="denied-recheck" type="button">Re-check access</button>
+            <button class="btn btn-sm" id="denied-signout" type="button">Sign out</button>
+          </div>
+        </div>
+
+        <!-- gate: demo mode (no Supabase credentials) -->
+        <div class="panel-card admin-gate" id="admin-demo" hidden>
+          <h2>Connect Supabase first</h2>
+          <p class="admin-note">The console needs live data. Put your credentials in <code>.env</code>
+            (<code>SUPABASE_URL</code> + <code>SUPABASE_ANON_KEY</code>) and run
+            <code>npm run env:sync</code>, then reload this page.</p>
+        </div>
+
+        <!-- console -->
+        <div id="admin-console" hidden>
+
+          <!-- summary + toolbar -->
+          <div class="admin-topbar">
+            <div class="admin-stats" id="admin-stats">
+              <div class="stat"><span class="stat-n" data-stat="products">0</span><span class="stat-l">Products</span></div>
+              <div class="stat"><span class="stat-n" data-stat="pending">0</span><span class="stat-l">Pending orders</span></div>
+              <div class="stat"><span class="stat-n" data-stat="messages">0</span><span class="stat-l">Messages</span></div>
+              <div class="stat"><span class="stat-n" data-stat="subs">0</span><span class="stat-l">Subscribers</span></div>
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-outline btn-sm" id="admin-refresh" type="button">Refresh</button>
+              <button class="btn btn-outline btn-sm" id="admin-signout" type="button">Sign out</button>
+            </div>
+          </div>
+          <p class="admin-who" id="admin-who">—</p>
+
+          <!-- tabs -->
+          <nav class="admin-tabs" id="admin-tabs" aria-label="Admin sections">
+            <button class="tab-btn is-on" data-tab="products" type="button">Products</button>
+            <button class="tab-btn" data-tab="categories" type="button">Categories</button>
+            <button class="tab-btn" data-tab="orders" type="button">Orders</button>
+            <button class="tab-btn" data-tab="messages" type="button">Messages</button>
+            <button class="tab-btn" data-tab="subs" type="button">Subscribers</button>
+          </nav>
+
+          <!-- ── products ─────────────────────────────────────────────── -->
+          <section class="admin-panel" data-panel="products">
+            <div class="admin-toolbar">
+              <input id="prod-search" type="search" class="admin-search" placeholder="Filter products…" autocomplete="off" aria-label="Filter products">
+              <button class="btn btn-sm" id="prod-new" type="button">＋ New product</button>
+            </div>
+
+            <!-- product add/edit form -->
+            <form class="panel-card prod-form" id="prod-form" hidden novalidate>
+              <h3 id="prod-form-title">Add product</h3>
+              <input type="hidden" id="prod-id">
+              <div class="form-grid prod-grid">
+                <div class="field">
+                  <label for="prod-name">Name</label>
+                  <input id="prod-name" type="text" placeholder="Classic Logo Tee" required>
+                </div>
+                <div class="field">
+                  <label for="prod-cat">Category</label>
+                  <select id="prod-cat" required></select>
+                </div>
+                <div class="field">
+                  <label for="prod-price">Price ($)</label>
+                  <input id="prod-price" type="number" min="0" step="0.01" placeholder="24.99" required>
+                </div>
+                <div class="field">
+                  <label for="prod-orig">Sale price — original ($)</label>
+                  <input id="prod-orig" type="number" min="0" step="0.01" placeholder="29.99 (optional)">
+                </div>
+                <div class="field">
+                  <label for="prod-stock">Stock</label>
+                  <input id="prod-stock" type="number" min="0" step="1" placeholder="42" required>
+                </div>
+                <div class="field">
+                  <label for="prod-img">Image URL</label>
+                  <input id="prod-img" type="url" placeholder="https://… (or upload below)">
+                </div>
+                <div class="field field-wide">
+                  <label for="prod-img-file">…or upload image (product-images bucket)</label>
+                  <input id="prod-img-file" type="file" accept="image/*">
+                </div>
+                <div class="field">
+                  <img id="prod-preview" class="img-preview" alt="Product preview" hidden>
+                </div>
+                <div class="field field-wide">
+                  <label for="prod-desc">Description</label>
+                  <textarea id="prod-desc" rows="3" placeholder="Fabric, fit, feel…"></textarea>
+                </div>
+              </div>
+              <div class="checks-row">
+                <label class="check"><input type="checkbox" id="prod-newflag"> New arrival</label>
+                <label class="check"><input type="checkbox" id="prod-best"> Best seller</label>
+                <label class="check"><input type="checkbox" id="prod-active" checked> Visible in shop</label>
+              </div>
+              <div class="btn-row">
+                <button class="btn btn-sm" type="submit" id="prod-save">Save product</button>
+                <button class="btn btn-outline btn-sm" type="button" id="prod-cancel">Cancel</button>
+              </div>
+            </form>
+
+            <div class="table-scroll">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Image</th><th>Product</th><th>Category</th><th>Price</th>
+                    <th>Stock</th><th>Status</th><th class="th-actions">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="prod-rows"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- ── categories ───────────────────────────────────────────── -->
+          <section class="admin-panel" data-panel="categories" hidden>
+            <div class="admin-toolbar">
+              <span class="admin-note-inline">Collections shown in the storefront as product families.</span>
+              <button class="btn btn-sm" id="cat-new" type="button">＋ New category</button>
+            </div>
+
+            <form class="panel-card prod-form" id="cat-form" hidden novalidate>
+              <h3 id="cat-form-title">Add category</h3>
+              <input type="hidden" id="cat-id">
+              <div class="form-grid" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+                <div class="field">
+                  <label for="cat-name">Name</label>
+                  <input id="cat-name" type="text" placeholder="Hoodies" required>
+                </div>
+                <div class="field">
+                  <label for="cat-slug">Slug (URL)</label>
+                  <input id="cat-slug" type="text" placeholder="hoodies (auto from name)" pattern="[a-z0-9-]+">
+                </div>
+                <div class="field field-wide">
+                  <label for="cat-img">Image URL</label>
+                  <input id="cat-img" type="url" placeholder="https://…">
+                </div>
+                <div class="field field-wide">
+                  <label for="cat-desc">Description</label>
+                  <input id="cat-desc" type="text" placeholder="Short marketing line">
+                </div>
+              </div>
+              <div class="btn-row">
+                <button class="btn btn-sm" type="submit">Save category</button>
+                <button class="btn btn-outline btn-sm" type="button" id="cat-cancel">Cancel</button>
+              </div>
+            </form>
+
+            <div class="admin-grid" id="cat-list"></div>
+          </section>
+
+          <!-- ── orders ───────────────────────────────────────────────── -->
+          <section class="admin-panel" data-panel="orders" hidden>
+            <div class="admin-toolbar">
+              <label class="admin-note-inline" for="order-filter">Show</label>
+              <select id="order-filter" class="admin-search">
+                <option value="">All orders</option>
+                <option value="pending">Pending</option>
+                <option value="paid">Paid</option>
+                <option value="shipped">Shipped</option>
+                <option value="delivered">Delivered</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+            <div class="form-grid" id="orders-list" style="gap:1rem"></div>
+          </section>
+
+          <!-- ── messages ─────────────────────────────────────────────── -->
+          <section class="admin-panel" data-panel="messages" hidden>
+            <div class="admin-toolbar">
+              <span class="admin-note-inline">Contact form submissions.</span>
+            </div>
+            <div class="form-grid" id="msg-list" style="gap:1rem"></div>
+          </section>
+
+          <!-- ── subscribers ──────────────────────────────────────────── -->
+          <section class="admin-panel" data-panel="subs" hidden>
+            <div class="admin-toolbar">
+              <span class="admin-note-inline">Newsletter list.</span>
+              <button class="btn btn-outline btn-sm" id="subs-copy" type="button">Copy all emails</button>
+            </div>
+            <div class="table-scroll">
+              <table class="admin-table">
+                <thead><tr><th>Email</th><th>Since</th><th class="th-actions">Actions</th></tr></thead>
+                <tbody id="sub-rows"></tbody>
+              </table>
+            </div>
+          </section>
+
+        </div><!-- /console -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ═══════════════ footer ═══════════════ -->
+  <footer class="site-footer">
+    <div class="container footer-bottom" style="border-top:0">
+      <p>© <span id="year">2026</span> THE ORIGINAL FIT — internal console</p>
+      <nav aria-label="Shop">
+        <a href="../index.html">Storefront</a>
+        <span class="sep">|</span>
+        <a href="shop.html">Products live view</a>
+      </nav>
+    </div>
+  </footer>
+
+  <div class="toast-wrap" id="toast-wrap"></div>
+
+  <script src="../src/js/env.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="../src/js/supabase.js" defer></script>
+  <script src="../src/js/demo-data.js" defer></script>
+  <script src="../src/js/products.js" defer></script>
+  <script src="../src/js/cart.js" defer></script>
+  <script src="../src/js/wishlist.js" defer></script>
+  <script src="../src/js/auth.js" defer></script>
+  <script src="../src/js/search.js" defer></script>
+  <script src="../src/js/main.js" defer></script>
+  <script src="../src/js/admin.js" defer></script>
+</body>
+</html>
