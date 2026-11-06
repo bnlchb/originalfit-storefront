@@ -160,10 +160,10 @@ npm run env:sync    # writes git-ignored src/js/env.js from .env
 Manage the full site from `pages/admin.html` (products, categories, orders, contact
 messages, newsletter subscribers) — no dashboard digging required.
 
-1. **Enable admin rights** (once): run [`supabase/admin.sql`](supabase/admin.sql) in the
-   Supabase SQL Editor — after `schema.sql`. It is idempotent and only adds an
-   `is_admin` flag plus admin policies. RLS still protects every table; the browser
-   keeps using the publishable key only.
+1. **Enable admin rights** (once): run [`supabase/migrations/0002_admin_console_rls.sql`](supabase/migrations/0002_admin_console_rls.sql) in the
+   Supabase SQL Editor — after `schema.sql` (for existing installs: after migration 0001). It is
+   idempotent and only adds an `is_admin` flag plus admin policies. RLS still protects every table;
+   the browser keeps using the publishable key only.
 2. **Create the admin user**: Supabase Dashboard → Authentication → Users → **Add user**
    → *Create new user* (enable **Auto Confirm User**), then promote it:
    ```sql

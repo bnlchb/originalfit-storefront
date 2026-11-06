@@ -2,7 +2,7 @@
    THE ORIGINAL FIT — admin.js
    Admin console (pages/admin.html): sign-in gate + management of
    products, categories, orders, contact messages and newsletter subscribers.
-   Rights are enforced server-side by RLS (profiles.is_admin → supabase/admin.sql).
+   Rights are enforced server-side by RLS (profiles.is_admin → supabase/migrations/0002).
    ============================================================================ */
 'use strict';
 
@@ -58,7 +58,7 @@ window.TOF = window.TOF || {};
     const m = res.error.message || '';
     console.warn('[TOF admin]', m);
     if (/row.level|permission/i.test(m)) {
-      return 'Server refused — is supabase/admin.sql applied and is your account promoted?';
+      return 'Server refused — run supabase/migrations/0002_admin_console_rls.sql and promote this account (is_admin = true).';
     }
     if (/foreign key/i.test(m)) {
       return 'Still referenced elsewhere — move or delete the related rows first.';
@@ -87,7 +87,10 @@ window.TOF = window.TOF || {};
       console.warn('[TOF admin] profile read failed:', res.error.message);
       show(document.getElementById('admin-denied'));
       const msg = document.getElementById('denied-msg');
-      msg.textContent = 'Could not verify your account (' + res.error.message + ').';
+      msg.textContent = 'Could not verify your account (' + res.error.message + ').'
+        + (res.error.message.indexOf('is_admin') !== -1
+          ? ' Run supabase/migrations/0002_admin_console_rls.sql first — it adds the is_admin column.'
+          : '');
       return;
     }
 

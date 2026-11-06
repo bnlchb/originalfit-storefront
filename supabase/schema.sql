@@ -82,6 +82,7 @@ create table if not exists public.profiles (
   full_name   text        not null default '',
   email       text        not null default '',
   phone       text        not null default '',
+  is_admin    boolean     not null default false,
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()
 );
@@ -178,8 +179,9 @@ create table if not exists public.contact_messages (
 -- ============================================================================
 -- 8. ROW LEVEL SECURITY
 --    Notation: anon + authenticated read, per-owner everything else.
---    Writes to products / categories are done with the service_role key
---    (Supabase dashboard / future admin panel) — never exposed in frontend.
+--    Catalog/news/message writes: admin-only via profiles.is_admin — the
+--    frontend keeps using the anon/publishable key only. (Promote admins with
+--    supabase/migrations/0002_admin_console_rls.sql.)
 -- ============================================================================
 
 alter table public.categories              enable row level security;
@@ -191,15 +193,39 @@ alter table public.wishlists               enable row level security;
 alter table public.newsletter_subscribers  enable row level security;
 alter table public.contact_messages        enable row level security;
 
+-- Admin helper: single source of truth for every admin policy. Security
+-- definer keeps the flag readable even though profiles RLS is owner-only.
+create or replace function public.is_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select coalesce((select p.is_admin from public.profiles p where p.id = auth.uid()), false);
+$$;
+
 -- categories: public read ------------------------------------------------------
 drop policy if exists "categories_public_read" on public.categories;
 create policy "categories_public_read" on public.categories
   for select to anon, authenticated using (true);
 
+drop policy if exists "categories_admin_all" on public.categories;
+create policy "categories_admin_all" on public.categories
+  for all to authenticated
+  using (public.is_admin())
+  with check (public.is_admin());
+
 -- products: public read of active items ----------------------------------------
 drop policy if exists "products_public_read_active" on public.products;
 create policy "products_public_read_active" on public.products
   for select to anon, authenticated using (is_active = true);
+
+drop policy if exists "products_admin_all" on public.products;
+create policy "products_admin_all" on public.products
+  for all to authenticated
+  using (public.is_admin())
+  with check (public.is_admin());
 
 -- profiles: owner read/update ---------------------------------------------------
 drop policy if exists "profiles_select_own" on public.profiles;
@@ -213,6 +239,10 @@ create policy "profiles_update_own" on public.profiles
 drop policy if exists "profiles_insert_own" on public.profiles;
 create policy "profiles_insert_own" on public.profiles
   for insert to authenticated with check (auth.uid() = id);
+
+drop policy if exists "profiles_admin_select_all" on public.profiles;
+create policy "profiles_admin_select_all" on public.profiles
+  for select to authenticated using (public.is_admin());
 
 -- orders: owner read/insert ------------------------------------------------------
 drop policy if exists "orders_select_own" on public.orders;
@@ -229,6 +259,16 @@ create policy "orders_update_own_cancel" on public.orders
   using (auth.uid() = user_id and status = 'pending')
   with check (auth.uid() = user_id and status = 'cancelled');
 
+drop policy if exists "orders_admin_select_all" on public.orders;
+create policy "orders_admin_select_all" on public.orders
+  for select to authenticated using (public.is_admin());
+
+drop policy if exists "orders_admin_update_all" on public.orders;
+create policy "orders_admin_update_all" on public.orders
+  for update to authenticated
+  using (public.is_admin())
+  with check (public.is_admin());
+
 -- order_items: owner read/insert (join through orders) ---------------------------
 drop policy if exists "order_items_select_own" on public.order_items;
 create policy "order_items_select_own" on public.order_items
@@ -239,6 +279,10 @@ drop policy if exists "order_items_insert_own" on public.order_items;
 create policy "order_items_insert_own" on public.order_items
   for insert to authenticated
   with check (exists (select 1 from public.orders o where o.id = order_id and o.user_id = auth.uid()));
+
+drop policy if exists "order_items_admin_select_all" on public.order_items;
+create policy "order_items_admin_select_all" on public.order_items
+  for select to authenticated using (public.is_admin());
 
 -- wishlists: owner full CRUD ------------------------------------------------------
 drop policy if exists "wishlists_select_own" on public.wishlists;
@@ -253,23 +297,31 @@ drop policy if exists "wishlists_delete_own" on public.wishlists;
 create policy "wishlists_delete_own" on public.wishlists
   for delete to authenticated using (auth.uid() = user_id);
 
--- newsletter: public can subscribe, no read-back -----------------------------------
+-- newsletter: public can subscribe, no read-back except admins --------------------
 drop policy if exists "newsletter_public_insert" on public.newsletter_subscribers;
 create policy "newsletter_public_insert" on public.newsletter_subscribers
   for insert to anon, authenticated with check (true);
 
 drop policy if exists "newsletter_admin_read" on public.newsletter_subscribers;
 create policy "newsletter_admin_read" on public.newsletter_subscribers
-  for select to authenticated using (true); -- tighten/remove if you prefer service_role only
+  for select to authenticated using (public.is_admin());
 
--- contact: public can submit, no read-back -----------------------------------------
+drop policy if exists "newsletter_admin_delete" on public.newsletter_subscribers;
+create policy "newsletter_admin_delete" on public.newsletter_subscribers
+  for delete to authenticated using (public.is_admin());
+
+-- contact: public can submit, no read-back except admins --------------------------
 drop policy if exists "contact_public_insert" on public.contact_messages;
 create policy "contact_public_insert" on public.contact_messages
   for insert to anon, authenticated with check (true);
 
 drop policy if exists "contact_admin_read" on public.contact_messages;
 create policy "contact_admin_read" on public.contact_messages
-  for select to authenticated using (true); -- tighten/remove if you prefer service_role only
+  for select to authenticated using (public.is_admin());
+
+drop policy if exists "contact_admin_delete" on public.contact_messages;
+create policy "contact_admin_delete" on public.contact_messages
+  for delete to authenticated using (public.is_admin());
 
 -- ============================================================================
 -- 9. STORAGE — product-images & collection-images (public read)
@@ -289,21 +341,30 @@ create policy "storage_public_read" on storage.objects
   for select to anon, authenticated
   using (bucket_id in ('product-images', 'collection-images'));
 
--- Authenticated users can upload/manage files (recommended: prefix `uid/`)
+-- Authenticated users can upload/manage files — admins in the site buckets only
 drop policy if exists "storage_authenticated_write" on storage.objects;
 create policy "storage_authenticated_write" on storage.objects
   for insert to authenticated
-  with check (bucket_id in ('product-images', 'collection-images'));
+  with check (
+    bucket_id in ('product-images', 'collection-images')
+    and public.is_admin()
+  );
 
 drop policy if exists "storage_authenticated_update" on storage.objects;
 create policy "storage_authenticated_update" on storage.objects
   for update to authenticated
-  using (bucket_id in ('product-images', 'collection-images'));
+  using (
+    bucket_id in ('product-images', 'collection-images')
+    and public.is_admin()
+  );
 
 drop policy if exists "storage_authenticated_delete" on storage.objects;
 create policy "storage_authenticated_delete" on storage.objects
   for delete to authenticated
-  using (bucket_id in ('product-images', 'collection-images'));
+  using (
+    bucket_id in ('product-images', 'collection-images')
+    and public.is_admin()
+  );
 
 -- ============================================================================
 -- 10. SEED — collections (only)
@@ -328,6 +389,7 @@ on conflict (slug) do nothing;
 
 -- ============================================================================
 -- DONE. RLS is on; the anon key can safely ship to the browser.
--- Reminder: product/category writes need the service_role key (Dashboard or
--- a future admin tool) — the anon key intentionally has read-only access.
+-- Reminder: catalog/news/message writes are admin-only via RLS. Promote an
+-- account with supabase/migrations/0002_admin_console_rls.sql — no service_role
+-- key is ever used in the frontend.
 -- ============================================================================
