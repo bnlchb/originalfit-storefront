@@ -30,9 +30,9 @@ create unique index if not exists orders_client_ref_key
 
 -- 2. the secure order creator ---------------------------------------------------
 create or replace function public.create_order(
-  p_client_ref uuid default null,  -- one per submit (double-click / retry safe)
   p_items      jsonb,              -- [{"id": <product id>, "qty": 1..50}]
-  p_address    jsonb               -- checkout form fields
+  p_address    jsonb,              -- checkout form fields
+  p_client_ref uuid default null   -- one per submit (double-click / retry safe; must be LAST — PG requires parameters after a defaulted one to have defaults too — supabase-js calls with named args, so order is irrelevant to the browser)
 ) returns jsonb                    -- {"id", "subtotal", "shipping", "total"}
 language plpgsql
 security definer
@@ -148,7 +148,7 @@ begin
 end;
 $$;
 
-comment on function public.create_order(uuid, jsonb, jsonb) is
+comment on function public.create_order(jsonb, jsonb, uuid) is
   'Secure order creation: auth.uid() resolved server-side, prices re-read from public.products, address sanitized, totals computed here — client-supplied prices/totals/status are never trusted.';
 
 -- 3. lock the table paths — order writes only via the function ----------------
@@ -158,8 +158,8 @@ drop policy if exists "order_items_insert_own"   on public.order_items;
 drop policy if exists "order_items_insert_guest" on public.order_items;
 
 -- function-level access: only the web/api roles may call it
-revoke execute on function public.create_order(uuid, jsonb, jsonb) from public;
-grant execute on function public.create_order(uuid, jsonb, jsonb) to anon, authenticated;
+revoke execute on function public.create_order(jsonb, jsonb, uuid) from public;
+grant execute on function public.create_order(jsonb, jsonb, uuid) to anon, authenticated;
 
 -- VERIFY ---------------------------------------------------------------------
 -- Orders/item write policies should list ONLY admin + owner reads + admin update:
