@@ -103,19 +103,53 @@ window.TOF = window.TOF || {};
     resolveReady();
   }
 
-  /* Call a remote QL snippet, fall back to demo side-effect when needed. */
+  /* ------------------------------------------------ error classification -- */
+  /* Order failures must NOT all look the same: a dead session (401) is fixed
+     differently from an RLS rejection (403/42501), a network error or a DB
+     rule violation. Classify supabase-js / PostgREST / fetch errors once. */
+  const AUTH_RE = /jwt|session|token|401|unauthorized|expired/i;
+  const RLS_RE  = /row-level security|42501|permission denied|violates/i;
+  const NET_RE  = /failed to fetch|networkerror|load failed|fetch failed/i;
+
+  function classifyError(err) {
+    const msg = String((err && err.message) || err || '');
+    const code = String((err && err.code) || '');
+    const status = Number((err && err.status) || 0);
+    if (err instanceof SyntaxError || err instanceof TypeError || NET_RE.test(msg)) return 'network';
+    if (status === 401 || code === 'PGRST301' || code === 'PGRST304' || AUTH_RE.test(msg)) return 'auth';
+    if (code === 'PGRST202' || /could not find the function|schema cache/i.test(msg)) return 'missing-rpc';
+    if (status === 403 || code === '42501' || RLS_RE.test(msg)) return 'forbidden';
+    return 'db';
+  }
+
+  /* Attach a stable .kind to any error-ish object (or wrap a raw string). */
+  T.tagError = function tagError(err) {
+    let e = err;
+    if (!e || typeof e !== 'object') e = { message: String(err || 'Unknown error.') };
+    try { e.kind = classifyError(e); } catch { e.kind = 'db'; }
+    return e;
+  };
+
+  /* Call a remote QL snippet, fall back to demo side-effect when needed.
+     Every failure is classified (kind) and surfaced verbatim — never silently
+     hidden or replaced by a placeholder message. */
   T.remoteOr = async function remoteOr(test, fnRemote, fnDemo) {
     if (T.sb) {
+      let result = null;
       try {
-        const result = await fnRemote();
+        result = await fnRemote();
         if (!result.error) return result;
-        console.warn('[TOF] remote call failed → fallback:', result.error && result.error.message);
+        result.error = T.tagError(result.error);
+        console.warn('[TOF] remote call failed → fallback [' + result.error.kind + ']:', result.error.message);
       } catch (err) {
-        console.warn('[TOF] remote call threw → fallback:', err && err.message);
+        result = { data: null, error: T.tagError(err) };
+        console.warn('[TOF] remote call threw → fallback [' + result.error.kind + ']:', result.error.message);
       }
+      if (fnDemo) return fnDemo();
+      return result && result.error ? result : { data: null, error: { message: 'Supabase is not connected.', kind: 'network' } };
     }
     if (fnDemo) return fnDemo();
-    return { data: null, error: { message: 'Supabase is not connected.' } };
+    return { data: null, error: { message: 'Supabase is not connected.', kind: 'network' } };
   };
 
   /* ---------------------------------------------------- platform-level API -- */
@@ -168,29 +202,31 @@ window.TOF = window.TOF || {};
       ).then(() => ({ ok: true }));
     },
 
-    /** Create an order (authenticated users only). Returns the new order id. */
-    async createOrder({ userId, total, address, items }) {
+    /** Create an order through the secure DB function `create_order` (migration
+        0004). The browser never supplies prices, totals or ownership: the
+        function re-reads prices from `products`, resolves the customer with
+        auth.uid() and computes shipping + total server-side. `clientRef` is a
+        UUID minted per submit — the same value retried returns the same order
+        (DB-level duplicate protection). */
+    async createOrder({ address, items, clientRef }) {
       return T.remoteOr(
         null,
         async () => {
-          const { data: orderRow, error: e1 } = await T.sb
-            .from('orders')
-            .insert({ user_id: userId, total_amount: total, shipping_address: address })
-            .select('id')
-            .single();
-          if (e1) throw e1;
-          const rows = items.map((it) => ({
-            order_id: orderRow.id,
-            product_id: it.id,
-            quantity: it.qty,
-            unit_price: it.price,
-          }));
-          const { error: e2 } = await T.sb.from('order_items').insert(rows);
-          if (e2) throw e2;
-          return { data: orderRow, error: null };
+          const { data, error } = await T.sb.rpc('create_order', {
+            p_client_ref: clientRef || null,
+            p_address: address,     // untrusted: sanitized inside the function
+            p_items: (items || []).map((it) => ({ id: it.id, qty: it.qty })),
+          });
+          if (error) throw error;
+          return { data: data || null, error: null };
         },
         null,
-      ).then((r) => ({ ok: !!(r && r.data), id: r && r.data ? r.data.id : null, error: r ? r.error : null }));
+      ).then((r) => ({
+        ok: !!((r && r.data && r.data.id)),
+        id: r && r.data ? r.data.id : null,
+        total: r && r.data ? r.data.total : null,
+        error: r ? r.error : null,
+      }));
     },
 
     /** Orders for the signed-in user (with joined product info). */

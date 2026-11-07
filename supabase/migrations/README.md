@@ -24,6 +24,9 @@ database that has data).
 | # | File | Purpose |
 | --- | --- | --- |
 | 0001 | `0001_remove_demo_seed_products.sql` | Deletes the 10 placeholder seed products (catalog → live rows only) |
+| 0002 | `0002_admin_console_rls.sql` | `profiles.is_admin` + `is_admin()` helper + admin console policies |
+| 0003 | `0003_guest_checkout.sql` | Guest checkout: anon inserts for null-user orders + items |
+| 0004 | `0004_secure_order_creation.sql` | All order creation moves behind a security-definer `create_order()` — server re-prices from `products`, no more anon/authenticated direct INSERT policies, `client_ref` idempotency |
 
 ## Changing the schema later
 

@@ -126,10 +126,15 @@ create table if not exists public.orders (
   status            text          not null default 'pending'
                                   check (status in ('pending','paid','shipped','delivered','cancelled')),
   shipping_address  jsonb         not null default '{}'::jsonb,
+  client_ref        uuid,                   -- idempotency key minted per submit (migration 0004)
   created_at        timestamptz   not null default now()
 );
 
 create index if not exists orders_user_idx on public.orders (user_id, created_at desc);
+
+-- idempotency: one order per client_ref (nullable → existing rows unaffected)
+create unique index if not exists orders_client_ref_key
+  on public.orders (client_ref) where client_ref is not null;
 
 create table if not exists public.order_items (
   id          uuid          primary key default gen_random_uuid(),
@@ -205,6 +210,147 @@ as $$
   select coalesce((select p.is_admin from public.profiles p where p.id = auth.uid()), false);
 $$;
 
+-- ============================================================================
+-- 3b. SECURE ORDER CREATION (migration 0004)
+-- Every order is written by the security-definer function public.create_order().
+-- The browser never sends prices, totals, status or ownership: the function
+-- re-reads prices from public.products, resolves the customer with auth.uid(),
+-- sanitizes the shipping address and computes shipping + total. RLS stays
+-- ENABLED on orders/order_items for all roles — there are deliberately NO
+-- client INSERT policies after this section.
+-- ============================================================================
+create or replace function public.create_order(
+  p_client_ref uuid default null,  -- one per submit (double-click / retry safe)
+  p_items      jsonb,              -- [{"id": <product id>, "qty": 1..50}]
+  p_address    jsonb               -- checkout form fields
+) returns jsonb                    -- {"id", "subtotal", "shipping", "total"}
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_uid         uuid              := auth.uid();   -- resolved SERVER-side
+  v_subtotal    numeric(10,2)     := 0;
+  v_shipping    numeric(10,2)     := 0;
+  v_total       numeric(10,2)     := 0;
+  v_order_id    uuid;
+  v_addr        jsonb;
+  v_item        jsonb;
+  v_prod        public.products%rowtype;
+  v_pid         bigint;
+  v_qty         integer;
+  v_clean_items jsonb := '[]'::jsonb;
+begin
+  -- idempotency: a retried submit returns the order it already created
+  -- instead of writing a duplicate.
+  if p_client_ref is not null then
+    select o.id, o.total_amount,
+           (select coalesce(sum(i.unit_price * i.quantity), 0)
+              from public.order_items i where i.order_id = o.id)
+      into v_order_id, v_total, v_subtotal
+      from public.orders o
+     where o.client_ref = p_client_ref;
+    if v_order_id is not null then
+      return jsonb_build_object('id', v_order_id, 'subtotal', v_subtotal,
+                                'shipping', v_total - v_subtotal, 'total', v_total);
+    end if;
+  end if;
+
+  -- validate items ------------------------------------------------------------
+  if jsonb_typeof(p_items) <> 'array' or jsonb_array_length(p_items) = 0 then
+    raise exception 'Order contains no items.';
+  end if;
+  if jsonb_array_length(p_items) > 50 then
+    raise exception 'Too many order lines (max 50).';
+  end if;
+
+  for v_item in select * from jsonb_array_elements(p_items)
+  loop
+    if v_item->>'id' is null or (v_item->>'id') !~ '^[0-9]+$' then
+      raise exception 'Invalid product reference.';
+    end if;
+    v_pid := (v_item->>'id')::bigint;
+
+    if jsonb_typeof(v_item->'qty') <> 'number'
+       or (v_item->>'qty')::numeric <> floor((v_item->>'qty')::numeric)
+       or (v_item->>'qty')::numeric < 1
+       or (v_item->>'qty')::numeric > 50 then
+      raise exception 'Invalid quantity for product %.', v_pid;
+    end if;
+    v_qty := (v_item->>'qty')::integer;
+
+    -- re-price from the live catalog: the browser's price is not trusted here
+    select * into v_prod from public.products where id = v_pid and is_active = true;
+    if not found then
+      raise exception 'Product % is not available.', v_prod.name;
+    end if;
+
+    v_subtotal := v_subtotal + round(v_prod.price * v_qty, 2);
+    v_clean_items := v_clean_items || jsonb_build_object(
+      'product_id', v_pid, 'quantity', v_qty, 'unit_price', v_prod.price);
+  end loop;
+
+  -- validate + sanitize the shipping address -----------------------------------
+  -- Whitelisted keys only; blank-but-optional fields are kept out cleanly.
+  v_addr := jsonb_build_object(
+    'full_name', left(btrim(coalesce(p_address->>'full_name', '')), 80),
+    'phone',     left(btrim(coalesce(p_address->>'phone', '')), 24),
+    'email',     left(btrim(coalesce(p_address->>'email', '')), 120),
+    'address',   left(btrim(coalesce(p_address->>'address', '')), 200),
+    'city',      left(btrim(coalesce(p_address->>'city', '')), 80),
+    'zip',       left(btrim(coalesce(p_address->>'zip', '')), 12),
+    'country',   left(btrim(coalesce(nullif(p_address->>'country', ''), 'Morocco')), 80)
+  );
+
+  if char_length(v_addr->>'full_name') < 2 then raise exception 'Shipping name is required.'; end if;
+  if char_length(v_addr->>'address')   < 3 then raise exception 'Shipping address is required.'; end if;
+  if char_length(v_addr->>'city')      < 2 then raise exception 'City is required.'; end if;
+  if char_length(v_addr->>'zip')       < 2 then raise exception 'Postal code is required.'; end if;
+  if v_addr->>'email' <> ''
+     and (v_addr->>'email') !~* '^[^@[:space:]]+@[^@[:space:]]+[.][^@[:space:]]+' then
+    raise exception 'Invalid email address.';
+  end if;
+
+  -- compute + write ------------------------------------------------------------
+  -- Shipping must stay in sync with src/js/cart.js: FREE_SHIPPING_AT = 500,
+  -- STANDARD_SHIPPING = 30 (DH). Computed server-side only.
+  v_shipping := case when v_subtotal >= 500 then 0 else 30 end;
+  v_total := v_subtotal + v_shipping;
+
+  begin
+    insert into public.orders (user_id, total_amount, shipping_address, client_ref)
+      values (v_uid, v_total, v_addr, p_client_ref)
+      returning id into v_order_id;
+  exception when unique_violation then
+    -- a concurrent request already claimed this client_ref: return theirs
+    select id into v_order_id from public.orders where client_ref = p_client_ref;
+  end;
+
+  insert into public.order_items (order_id, product_id, quantity, unit_price)
+    select v_order_id,
+           (e->>'product_id')::bigint,
+           (e->>'quantity')::integer,
+           (e->>'unit_price')::numeric
+      from jsonb_array_elements(v_clean_items) e;
+
+  return jsonb_build_object('id', v_order_id, 'subtotal', v_subtotal,
+                            'shipping', v_shipping, 'total', v_total);
+end;
+$$;
+
+comment on function public.create_order(uuid, jsonb, jsonb) is
+  'Secure order creation: auth.uid() resolved server-side, prices re-read from public.products, address sanitized, totals computed here — client-supplied prices/totals/status are never trusted.';
+
+-- order writes are ONLY possible through create_order(); no anon/authenticated
+-- table-level INSERT survives (these guards also converge partially-migrated DBs)
+drop policy if exists "orders_insert_own"        on public.orders;
+drop policy if exists "orders_insert_guest"      on public.orders;
+drop policy if exists "order_items_insert_own"   on public.order_items;
+drop policy if exists "order_items_insert_guest" on public.order_items;
+
+revoke execute on function public.create_order(uuid, jsonb, jsonb) from public;
+grant execute on function public.create_order(uuid, jsonb, jsonb) to anon, authenticated;
+
 -- categories: public read ------------------------------------------------------
 drop policy if exists "categories_public_read" on public.categories;
 create policy "categories_public_read" on public.categories
@@ -244,20 +390,11 @@ drop policy if exists "profiles_admin_select_all" on public.profiles;
 create policy "profiles_admin_select_all" on public.profiles
   for select to authenticated using (public.is_admin());
 
--- orders: owner read/insert ------------------------------------------------------
+-- orders: owner read, customer cancel-before-shipment. CREATION happens only
+-- through public.create_order() (section 3b) — no client INSERT policy exists.
 drop policy if exists "orders_select_own" on public.orders;
 create policy "orders_select_own" on public.orders
   for select to authenticated using (auth.uid() = user_id);
-
-drop policy if exists "orders_insert_own" on public.orders;
-create policy "orders_insert_own" on public.orders
-  for insert to authenticated with check (auth.uid() = user_id);
-
--- guest checkout: anonymous visitors order without an account (user_id null) --
-drop policy if exists "orders_insert_guest" on public.orders;
-create policy "orders_insert_guest" on public.orders
-  for insert to anon
-  with check (user_id is null);
 
 drop policy if exists "orders_update_own_cancel" on public.orders;
 create policy "orders_update_own_cancel" on public.orders
@@ -275,21 +412,11 @@ create policy "orders_admin_update_all" on public.orders
   using (public.is_admin())
   with check (public.is_admin());
 
--- order_items: owner read/insert (join through orders) ---------------------------
+-- order_items: owner read; rows are written inside create_order() ----------------
 drop policy if exists "order_items_select_own" on public.order_items;
 create policy "order_items_select_own" on public.order_items
   for select to authenticated
   using (exists (select 1 from public.orders o where o.id = order_id and o.user_id = auth.uid()));
-
-drop policy if exists "order_items_insert_own" on public.order_items;
-create policy "order_items_insert_own" on public.order_items
-  for insert to authenticated
-  with check (exists (select 1 from public.orders o where o.id = order_id and o.user_id = auth.uid()));
-
-drop policy if exists "order_items_insert_guest" on public.order_items;
-create policy "order_items_insert_guest" on public.order_items
-  for insert to anon
-  with check (exists (select 1 from public.orders o where o.id = order_id and o.user_id is null));
 
 drop policy if exists "order_items_admin_select_all" on public.order_items;
 create policy "order_items_admin_select_all" on public.order_items

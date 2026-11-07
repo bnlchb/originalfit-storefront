@@ -110,7 +110,7 @@ the-original-fit/
 | Shop | Category chips, On-Sale filter, sorting (best sellers / newest / price / name), keyword search, result count, skeletons, empty state |
 | Product | Zoom-on-hover media, size selector, quantity stepper, wishlist heart, stock state, related products, accordions |
 | Cart | Sliding drawer + full page, size chips per line, qty · −/+, remove, free-shipping progress over 500 DH, persisted between sessions (localStorage) |
-| Checkout | Guest order in one click → address form → order + order_items written to Supabase; guest orders are stored without an account link and managed in the admin console |
+| Checkout | Guest order in one click → address form → `create_order()` security-definer RPC writes order + order_items with prices re-verified from `products` (client never sends totals); guest orders are stored without an account link and managed in the admin console |
 | Accounts | Supabase email/password auth, auto-created `profiles` row (trigger), profile editing, order history, wishlist |
 | Wishlist | Heart on cards & PDP, persists locally, syncs/merges with `wishlists` when signed in |
 | Search | Live results overlay with thumbnails, Enter → shop?q=… |

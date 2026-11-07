@@ -178,6 +178,17 @@ window.TOF = window.TOF || {};
   T.cartPageDelegation = cartItemDelegation; // reused by main.js for the drawer
 
   /* ------------------------------------------------------------- checkout -- */
+  /* One random UUID per submission: the DB dedupes double-clicks/retries on it
+     (orders.client_ref, migration 0004). A new token is minted on each submit. */
+  function newClientRef() {
+    if (window.crypto && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+    const b = crypto.getRandomValues(new Uint8Array(16));
+    b[6] = (b[6] & 0x0f) | 0x40;   // uuid v4 bits
+    b[8] = (b[8] & 0x3f) | 0x80;   // variant bits
+    const h = Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('');
+    return h.slice(0, 8) + '-' + h.slice(8, 12) + '-' + h.slice(12, 16) + '-' + h.slice(16, 20) + '-' + h.slice(20);
+  }
+
   async function startCheckout() {
     if (!items.length) return;
     const user = await T.auth.ready().then(() => T.auth.user());
@@ -203,51 +214,53 @@ window.TOF = window.TOF || {};
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner"></span> Placing order…';
 
-      const shippingCost = shipping();
-      let res = await T.api.createOrder({
-        userId: user ? user.id : null,
-        total: subtotal() + shippingCost,
-        address: {
-          full_name: data.full_name, phone: data.phone || '', email: data.email || '',
-          address: data.address, city: data.city, zip: data.zip, country: data.country || 'Morocco',
-        },
-        items,
-      });
+      /* The server (create_order RPC) treats everything here as untrusted:
+         it re-prices every line from `products`, resolves the customer via
+         auth.uid(), validates this address and computes the total itself.
+         clientRef stays the same across a retry — the DB returns the SAME
+         order instead of writing a duplicate. */
+      const clientRef = newClientRef();
+      const addr = {
+        full_name: data.full_name, phone: data.phone || '', email: data.email || '',
+        address: data.address, city: data.city, zip: data.zip, country: data.country || 'Morocco',
+      };
+
+      let res = await T.api.createOrder({ address: addr, items, clientRef });
+      let orderedAsGuest = !user;
 
       /* If the stored sign-in session was expired when the customer pressed
-         submit, the first attempt dies with a JWT error. Retry ONCE as a
-         guest order — never block a purchase on account plumbing. */
-      if (!res.ok && user && /jwt|session|token|401/i.test(String((res.error && res.error.message) || ''))) {
+         submit, the first attempt dies with a 401/JWT error. Clear the dead
+         session FIRST — otherwise the retry sends the same expired
+         Authorization header and fails identically — then retry ONCE as a
+         guest order, same clientRef. */
+      if (!res.ok && user && res.error && res.error.kind === 'auth') {
         console.warn('[TOF] sign-in session expired mid-checkout — retrying as guest.');
-        res = await T.api.createOrder({
-          userId: null,
-          total: subtotal() + shippingCost,
-          address: {
-            full_name: data.full_name, phone: data.phone || '', email: data.email || '',
-            address: data.address, city: data.city, zip: data.zip, country: data.country || 'Morocco',
-          },
-          items,
-        });
+        try { await T.sb.auth.signOut(); } catch { /* session already dead */ }
+        try { localStorage.removeItem('tof-auth'); } catch { /* private mode */ }
+        res = await T.api.createOrder({ address: addr, items, clientRef });
+        orderedAsGuest = res.ok;
       }
 
       if (!res.ok) {
         btn.disabled = false;
         btn.textContent = 'Place Order';
-        T.toast('Could not place the order — ' + ((res.error && res.error.message) || 'try again.'));
+        T.toast(res.error && res.error.kind === 'missing-rpc'
+          ? 'Order system not ready — the store database still needs migration 0004 (Supabase → SQL Editor).'
+          : 'Could not place the order — ' + ((res.error && res.error.message) || 'please try again.'));
         return;
       }
 
-      // success
+      // success — the cart is cleared ONLY here, after the order exists
       document.getElementById('cart-main').hidden = true;
       successEl.hidden = false;
       successEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
       document.getElementById('success-id').textContent = 'Order #' + String(res.id).slice(0, 8).toUpperCase();
       const note = document.getElementById('success-note');
-      if (note) note.textContent = user
-        ? 'We sent a confirmation email and you can follow the progress under My Account → Orders.'
-        : 'You ordered as a guest — keep your order number handy, we will contact you to confirm the details.';
+      if (note) note.textContent = orderedAsGuest
+        ? 'You ordered as a guest — keep your order number handy, we will contact you to confirm the details.'
+        : 'We sent a confirmation email and you can follow the progress under My Account → Orders.';
       const ordersLink = document.getElementById('success-orders-link');
-      if (ordersLink) ordersLink.hidden = !user;
+      if (ordersLink) ordersLink.hidden = orderedAsGuest;
       clear();
       btn.disabled = false;
       btn.textContent = 'Place Order';
