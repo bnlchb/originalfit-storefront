@@ -27,6 +27,7 @@ database that has data).
 | 0002 | `0002_admin_console_rls.sql` | `profiles.is_admin` + `is_admin()` helper + admin console policies |
 | 0003 | `0003_guest_checkout.sql` | Guest checkout: anon inserts for null-user orders + items |
 | 0004 | `0004_secure_order_creation.sql` | All order creation moves behind a security-definer `create_order()` — server re-prices from `products`, no more anon/authenticated direct INSERT policies, `client_ref` idempotency |
+| 0005 | `0005_fix_create_order_null_total.sql` | Fixes 23502 (total_amount NULL) from 0004: PL/pgSQL `SELECT…INTO` with no rows nulls the accumulators — re-init on miss + hardened concurrent-submit fallback |
 
 ## Changing the schema later
 

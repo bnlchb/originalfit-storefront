@@ -243,6 +243,9 @@ declare
 begin
   -- idempotency: a retried submit returns the order it already created
   -- instead of writing a duplicate.
+  -- NOTE: SELECT…INTO with no rows NULLs EVERY target — the re-initialization
+  -- below is MANDATORY or v_subtotal/v_total stay NULL for all first submits
+  -- (root cause of the 23502 total_amount bug, fixed in migration 0005).
   if p_client_ref is not null then
     select o.id, o.total_amount,
            (select coalesce(sum(i.unit_price * i.quantity), 0)
@@ -250,10 +253,15 @@ begin
       into v_order_id, v_total, v_subtotal
       from public.orders o
      where o.client_ref = p_client_ref;
-    if v_order_id is not null then
+    if found then
       return jsonb_build_object('id', v_order_id, 'subtotal', v_subtotal,
                                 'shipping', v_total - v_subtotal, 'total', v_total);
     end if;
+    -- no prior order for this ref: restore the working accumulators
+    v_order_id := null;
+    v_subtotal := 0;
+    v_total    := 0;
+    v_shipping := 0;
   end if;
 
   -- validate items ------------------------------------------------------------
@@ -322,8 +330,13 @@ begin
       values (v_uid, v_total, v_addr, p_client_ref)
       returning id into v_order_id;
   exception when unique_violation then
-    -- a concurrent request already claimed this client_ref: return theirs
+    -- a concurrent request claimed this client_ref; its row may not be
+    -- visible inside this transaction yet — fail cleanly with a retry hint
+    -- instead of writing order_items against a NULL order_id.
     select id into v_order_id from public.orders where client_ref = p_client_ref;
+    if v_order_id is null then
+      raise exception 'Order is being processed — please try again in a moment.';
+    end if;
   end;
 
   insert into public.order_items (order_id, product_id, quantity, unit_price)
@@ -339,7 +352,7 @@ end;
 $$;
 
 comment on function public.create_order(jsonb, jsonb, uuid) is
-  'Secure order creation: auth.uid() resolved server-side, prices re-read from public.products, address sanitized, totals computed here — client-supplied prices/totals/status are never trusted.';
+  'Secure order creation: auth.uid() resolved server-side, prices re-read from public.products, address sanitized, totals computed here — client-supplied prices/totals/status are never trusted. Fixed in 0005: accumulator re-init after a no-row idempotency lookup.';
 
 -- order writes are ONLY possible through create_order(); no anon/authenticated
 -- table-level INSERT survives (these guards also converge partially-migrated DBs)
