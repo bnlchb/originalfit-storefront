@@ -29,6 +29,7 @@ database that has data).
 | 0004 | `0004_secure_order_creation.sql` | All order creation moves behind a security-definer `create_order()` — server re-prices from `products`, no more anon/authenticated direct INSERT policies, `client_ref` idempotency |
 | 0005 | `0005_fix_create_order_null_total.sql` | Fixes 23502 (total_amount NULL) from 0004: PL/pgSQL `SELECT…INTO` with no rows nulls the accumulators — re-init on miss + hardened concurrent-submit fallback |
 | 0006 | `0006_admin_login_throttle.sql` | Server-side admin sign-in throttle: `admin_login_attempts` ledger (RLS ON, zero policies) + `admin_login_lock()` — 1/5/15/30/60-min locks after every 5 failures per identifier (24h window) + 10-min IP spray guard; a success wipes the key; passwords never stored |
+| 0007 | `0007_admin_login_aggressive_ladder.sql` | Replaces the ladder with an aggressive per-attempt progression: every failed attempt locks immediately — 1m/5m/20m/20m/20m/20m/30m/1h/2h/6h/12h/24h (rows 4–6 clamped non-decreasing); expiry never resets; only a successful sign-in wipes; 7-day ledger horizon |
 
 ## Changing the schema later
 

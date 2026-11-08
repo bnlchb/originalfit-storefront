@@ -130,9 +130,10 @@ window.TOF = window.TOF || {};
     let left = Math.max(1, Number(state.retry_after) || 1);
 
     const paint = () => {
-      const mm = Math.floor(left / 60), ss = String(left % 60).padStart(2, '0');
-      lockEl.textContent = 'Too many failed login attempts. Please try again in '
-        + (mm >= 1 ? mm + (mm === 1 ? ' minute — ' : ' minutes — ') : '') + mm + ':' + ss + '.';
+      const hh = String(Math.floor(left / 3600)).padStart(2, '0');
+      const mm = String(Math.floor((left % 3600) / 60)).padStart(2, '0');
+      const ss = String(left % 60).padStart(2, '0');
+      lockEl.textContent = 'Too many failed login attempts. Please try again in ' + hh + ':' + mm + ':' + ss + '.';
       lockEl.hidden = false;
     };
     paint();

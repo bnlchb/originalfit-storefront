@@ -117,14 +117,17 @@ create trigger on_auth_user_created
   for each row execute function public.handle_new_user();
 
 -- ============================================================================
--- 3c. ADMIN SIGN-IN THROTTLE (migration 0006)
--- Server-side brute-force protection metered by the security-definer function
--- admin_login_lock(): a 24h ledger of failed attempts keyed to the normalized
--- login identifier + best-effort client IP (RLS ON, ZERO policies on the
--- table — only the definer function touches it; passwords are never stored).
--- Ladder: every 5 failures in a 24h window → lock 1 min → 5 → 15 → 30 → 1h cap
--- (never permanent; a successful sign-in wipes the identifier's failures).
--- Independent spray guard: ≥20 failures from one IP in 10 min → 10-min cooldown.
+-- 3c. ADMIN SIGN-IN THROTTLE (migrations 0006/0007)
+-- Aggressive PER-ATTEMPT ladder, server-enforced by public.admin_login_lock():
+-- EVERY failed admin sign-in advances the lock level immediately (no
+-- 5-attempt threshold): 1m → 5m → 20m → 20m → 20m → 20m → 30m → 1h → 2h →
+-- 6h → 12h → 24h cap. Lock expiry never resets the counter; the ONLY reset
+-- is a successful sign-in (which wipes the identifier's failures). All
+-- counters/timestamps live in admin_login_attempts — RLS ON, ZERO policies
+-- (only the definer function touches it; the password is never stored).
+-- Server state is keyed to the normalized identifier + best-effort client
+-- IP, so refreshing, new tabs or another browser cannot bypass. A separate
+-- spray guard gives ≥20 failures from one IP in 10 min a 10-min cooldown.
 -- ============================================================================
 create table if not exists public.admin_login_attempts (
   id         bigint      generated always as identity primary key,
@@ -155,7 +158,6 @@ declare
   v_addr     text;
   v_fails    integer;
   v_last     timestamptz;
-  v_level    integer;
   v_dur      integer;
   v_ip_last  timestamptz;
   v_ip_fails integer;
@@ -177,30 +179,44 @@ begin
   end;
   v_ip := coalesce(left(btrim(coalesce(v_addr, 'unknown')), 64), 'unknown');
 
-  -- ledger hygiene: nothing older than 24 hours matters
-  delete from public.admin_login_attempts where created_at < now() - interval '24 hours';
+  -- ledger horizon: the ladder must survive multi-hour/24h locks, so the
+  -- window/count horizon is 7 days; nothing older matters
+  delete from public.admin_login_attempts where created_at < now() - interval '7 days';
 
-  -- successful sign-in: wipe that identifier's failures — never punish a
-  -- legitimate admin who just proved ownership of the password
+  -- successful authentication: the ONLY thing that resets the progression
   if p_success is true then
     delete from public.admin_login_attempts where the_lock = v_key and not success;
     return jsonb_build_object('locked', false, 'retry_after', 0, 'fails', 0);
   end if;
 
-  -- record the failed attempt
+  -- every failed attempt is one row = one level advance
   if p_success is false then
     insert into public.admin_login_attempts (the_lock, ip, success) values (v_key, v_ip, false);
   end if;
 
-  -- identifier ladder (24h window)
+  -- counter + last failure time over the 7-day window (expiry never resets it)
   select count(*), max(created_at) into v_fails, v_last
     from public.admin_login_attempts
-   where the_lock = v_key and not success and created_at >= now() - interval '24 hours';
+   where the_lock = v_key and not success and created_at >= now() - interval '7 days';
 
-  v_level := v_fails / 5;  -- integer division: 5-9 → 1, 10-14 → 2, 15-19 → 3, ...
-  if v_level >= 1 then
-    v_dur := case v_level when 1 then 60 when 2 then 300 when 3 then 900
-             when 4 then 1800 else 3600 end;
+  -- aggressive per-attempt ladder (seconds); rows 4-6 clamped to be
+  -- non-decreasing as the request's own bullets demand
+  if v_fails >= 1 then
+    v_dur := (array[
+      60,        -- 1: 1 minute
+      300,       -- 2: 5 minutes
+      1200,      -- 3: 20 minutes
+      1200,      -- 4: 20 min (requested 5 min — non-increasing, clamped)
+      1200,      -- 5: 20 min (requested 10 min — non-increasing, clamped)
+      1200,      -- 6: 20 minutes
+      1800,      -- 7: 30 minutes
+      3600,      -- 8: 1 hour
+      7200,      -- 9: 2 hours
+      21600,     -- 10: 6 hours
+      43200,     -- 11: 12 hours
+      86400      -- 12+: 24 hours
+    ])[least(v_fails, 12)];
+
     if v_last + make_interval(secs => v_dur) > now() then
       v_locked := true;
       v_wait := greatest(1, extract(epoch from (v_last + make_interval(secs => v_dur) - now()))::integer);
@@ -208,13 +224,13 @@ begin
   end if;
 
   -- spray guard: one address hammering many identifiers in a burst
-  if not v_locked and v_ip <> 'unknown' then
+  if v_ip <> 'unknown' then
     select count(*), max(created_at) into v_ip_fails, v_ip_last
       from public.admin_login_attempts
      where ip = v_ip and not success and created_at >= now() - interval '10 minutes';
     if v_ip_fails >= 20 then
       v_locked := true;
-      v_wait := greatest(1, extract(epoch from (v_ip_last + interval '10 minutes' - now()))::integer);
+      v_wait := greatest(v_wait, greatest(1, extract(epoch from (v_ip_last + interval '10 minutes' - now()))::integer));
     end if;
   end if;
 
@@ -223,7 +239,7 @@ end;
 $$;
 
 comment on function public.admin_login_lock(text, boolean) is
-  'Server-side admin sign-in throttle: 24h ledger of failed attempts keyed to identifier + client IP; ladder 1/5/15/30/60-min locks after every 5 failures; never permanent; passwords never stored.';
+  'Aggressive per-attempt admin sign-in throttle (0007): every failure advances the lock immediately — 1m/5m/20m/20m/20m/20m/30m/1h/2h/6h/12h/24h; expiry never resets; only a successful sign-in wipes; server-side ledger, passwords never stored.';
 
 revoke all on function public.admin_login_lock(text, boolean) from public;
 grant execute on function public.admin_login_lock(text, boolean) to anon, authenticated;
