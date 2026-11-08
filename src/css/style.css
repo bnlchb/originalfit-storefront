@@ -473,7 +473,7 @@ body.solid-header .site-header { background: rgba(255, 255, 255, .92); backdrop-
 }
 .hero-cta { margin-top: 0; }
 
-/* "(Scroll Down)" beside the hero CTA — gray, same micro-label design */
+/* "(Scroll Down)" beside the hero CTA — tone-on-tone gray rgb(102,102,102) */
 .hero-scroll-inline {
   display: inline-flex;
   align-items: center;
@@ -481,7 +481,7 @@ body.solid-header .site-header { background: rgba(255, 255, 255, .92); backdrop-
   font-weight: 600;
   letter-spacing: .3em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: #666666;                  /* rgb(102 102 102) */
   transition: color var(--ease) .2s;
 }
 .hero-scroll-inline:hover { color: var(--ink); }
