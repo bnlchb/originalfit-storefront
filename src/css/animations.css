@@ -39,6 +39,7 @@ main { animation: pageIn .55s var(--ease) both; }
 .hero-subtitle { animation: heroIn .7s var(--ease) .2s both; }
 .hero-lead     { animation: heroIn .7s var(--ease) .27s both; }
 .hero-cta      { animation: heroIn .7s var(--ease) .34s both; }
+.hero-scroll-inline { animation: heroIn .7s var(--ease) .4s both; }
 .hero-rail     { animation: heroIn .7s var(--ease) .5s both; }
 
 /* ------------------------------------------------------- scroll reveals IO -- */
