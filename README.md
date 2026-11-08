@@ -150,9 +150,9 @@ npm run env:sync    # writes git-ignored src/js/env.js from .env
 ## 6. Notes
 
 - Images point at hosted editorial fashion photography; to use your own, upload files to the
-  `product-images` bucket and swap the `image_url` values in the `products` table — or manage
-  everything from the admin console (section 7).
-
+  `product-images` bucket (or use the admin console uploader — up to 10 photos per product, see
+  migration `0008_product_multi_images.sql`) and swap the `image_url` values in the `products`
+  table. The storefront gallery reads `products.images`; `image_url` stays the cover fallback.
 ---
 
 ## 7. Admin console
@@ -173,8 +173,10 @@ messages, newsletter subscribers) — no dashboard digging required.
    and use that email + password. The console opens only for accounts whose
    `profiles.is_admin` is true.
 
-Admin capabilities: add/edit/hide/delete products (image URL or upload to the
-`product-images` bucket), manage categories, view all orders and move their status
-along `pending → paid → shipped → delivered / cancelled`, read/delete contact
-messages, manage the newsletter list. Ordered items keep their line even if the
-product is deleted (`on delete set null`).
+Admin capabilities: add/edit/hide/delete products — each with up to **10 photos**
+uploaded straight to the `product-images` bucket (drag & drop, per-photo removal,
+cover selection; the cover is mirrored to `image_url` for cards/cart/orders and all
+photos are saved to `products.images`), manage categories, view all orders and move
+their status along `pending → paid → shipped → delivered / cancelled`, read/delete
+contact messages, manage the newsletter list. Ordered items keep their line even if
+the product is deleted (`on delete set null`).

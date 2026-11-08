@@ -450,10 +450,62 @@ window.TOF = window.TOF || {};
     notFound.hidden = true;
     shell.hidden = false;
 
-    // media + badge
-    const img = qs('#pdp-img');
-    img.src = p.imageUrl;
-    img.alt = p.name + ' — ' + (p.categoryName || 'THE ORIGINAL FIT');
+    // multi-photo gallery — cover first (falls back to the single image_url);
+    // swipeable, arrows + thumbnail strip + 1/10 counter, keyed Left/Right too
+    const gallery = (p.images && p.images.length) ? p.images.filter((u) => typeof u === 'string' && u) : [p.imageUrl];
+    const media = qs('#pdp-media');
+    const thumbs = qs('#pdp-thumbs');
+    const countEl = qs('#pdp-count');
+    const multi = gallery.length > 1;
+    let gi = 0;
+
+    const paint = (i) => {
+      gi = i < 0 ? gallery.length - 1 : (i >= gallery.length ? 0 : i); // wrap-around
+      const el = qs('#pdp-img');
+      el.classList.add('is-swap');
+      el.src = gallery[gi];
+      el.alt = p.name + ' — photo ' + (gi + 1) + ' of ' + gallery.length + (p.categoryName ? ` — ${p.categoryName}` : '');
+      if (multi) {
+        countEl.hidden = false;
+        countEl.textContent = (gi + 1) + ' / ' + gallery.length;
+        qsa('#pdp-thumbs .pdpt').forEach((t, k) => t.classList.toggle('is-on', k === gi));
+      }
+    };
+    if (multi) {
+      countEl.hidden = false;
+      qs('#pdp-prev').hidden = false;
+      qs('#pdp-next').hidden = false;
+      thumbs.hidden = false;
+      thumbs.innerHTML = gallery.map((u, k) =>
+        `<button class="pdpt${k === 0 ? ' is-on' : ''}" type="button" aria-label="Photo ${k + 1}"><img src="${u}" alt="" loading="lazy"></button>`).join('');
+      thumbs.addEventListener('click', (e) => {
+        const b = e.target.closest('.pdpt');
+        if (b) paint(qsa('#pdp-thumbs .pdpt').indexOf(b));
+      });
+      qs('#pdp-prev').addEventListener('click', () => paint(gi - 1));
+      qs('#pdp-next').addEventListener('click', () => paint(gi + 1));
+
+      // touch/drag swipe on the media box
+      media.classList.add('has-multi');
+      let sx = 0, sy = 0, down = false;
+      media.addEventListener('pointerdown', (e) => { down = true; sx = e.clientX; sy = e.clientY; });
+      media.addEventListener('pointerup', (e) => {
+        if (!down) return;
+        down = false;
+        const dx = e.clientX - sx, dy = e.clientY - sy;
+        if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy)) paint(dx < 0 ? gi + 1 : gi - 1);
+      });
+      media.addEventListener('pointercancel', () => { down = false; });
+
+      // keyboard nav on the product page only
+      document.addEventListener('keydown', (e) => {
+        if (!/^(input|textarea|select)$/i.test((e.target || {}).tagName || '') && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+          paint(e.key === 'ArrowRight' ? gi + 1 : gi - 1);
+        }
+      });
+    }
+    qs('#pdp-img').classList.add('is-swap');
+    paint(0);
     const badgeEl = qs('#pdp-badge');
     const b = T.products.badgeOf(p);
     if (b) { badgeEl.hidden = false; badgeEl.className = 'badge ' + b.cls; badgeEl.textContent = b.label; }

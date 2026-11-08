@@ -22,6 +22,7 @@ window.TOF = window.TOF || {};
       price,
       originalPrice: row.original_price && Number(row.original_price) > price ? Number(row.original_price) : null,
       imageUrl: row.image_url,
+      images: Array.isArray(row.images) ? row.images.filter((u) => typeof u === 'string' && u) : [],
       categoryId: row.category_id,
       categorySlug: catSlug || row.category_slug || '',
       categoryName: catName || row.category_name || '',

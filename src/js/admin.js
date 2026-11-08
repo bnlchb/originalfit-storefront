@@ -25,8 +25,10 @@ window.TOF = window.TOF || {};
     prodFilter: '',
     orderFilter: '',
     activeTab: 'products',
-    uploadedFile: null,  // File for the product form
+    prodPhotos: [],     // [{url, name}] — uploaded photos for the product form
+    prodCover: 0,       // index of the cover photo within prodPhotos
   };
+  const MAX_PHOTOS = 10;
 
   /* ------------------------------------------------------------ helpers -- */
   function fmtDT(iso) {
@@ -339,18 +341,7 @@ window.TOF = window.TOF || {};
       paintProducts();
     });
 
-    document.getElementById('prod-img-file').addEventListener('change', (e) => {
-      const file = e.target.files && e.target.files[0];
-      S.uploadedFile = file || null;
-      const prev = document.getElementById('prod-preview');
-      if (file) {
-        prev.src = URL.createObjectURL(file);
-        prev.hidden = false;
-        T.toast(`Image “${file.name}” ready — it uploads when you save.`);
-      } else {
-        prev.hidden = true;
-      }
-    });
+    wireProductGallery();
 
     form.addEventListener('submit', (e) => { e.preventDefault(); saveProduct(); });
 
@@ -392,6 +383,105 @@ window.TOF = window.TOF || {};
     });
   }
 
+  /* ------------------------------------------------- product photo gallery -- */
+  /* Photos upload the moment they are picked/dropped (existing product-images
+     bucket, admin-only write). Removal deletes the bucket object too, so no
+     orphans pile up when the admin changes their mind before saving. The
+     cover (main photo) choice is saved at index 0 and mirrored into image_url. */
+  function wireProductGallery() {
+    const drop = document.getElementById('prod-drop');
+    const input = document.getElementById('prod-img-file');
+
+    drop.addEventListener('click', () => input.click());
+    drop.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.click(); }
+    });
+    input.addEventListener('change', () => {
+      addPhotos(Array.from(input.files || []));
+      input.value = '';
+    });
+
+    ['dragenter', 'dragover'].forEach((ev) =>
+      drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add('is-drag'); }));
+    ['dragleave', 'drop'].forEach((ev) =>
+      drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove('is-drag'); }));
+    drop.addEventListener('drop', (e) => addPhotos(Array.from((e.dataTransfer || {}).files || [])));
+
+    document.getElementById('prod-gallery').addEventListener('click', (e) => {
+      const rm = e.target.closest('[data-rm]');
+      if (rm) { removePhoto(Number(rm.dataset.rm)); return; }
+      const cov = e.target.closest('[data-cov]');
+      if (cov) { setCover(Number(cov.dataset.cov)); }
+    });
+  }
+
+  async function addPhotos(files) {
+    const imgs = files.filter((f) => f && /^image\//.test(f.type));
+    if (!imgs.length) { T.toast('Choose image files only.'); return; }
+    if (S.prodPhotos.length >= MAX_PHOTOS) { T.toast('Photo limit is 10 per product.'); return; }
+
+    const prodName = document.getElementById('prod-name').value.trim();
+    let added = 0;
+    for (const f of imgs) {
+      if (S.prodPhotos.length >= MAX_PHOTOS) { T.toast('Photo limit is 10 per product.'); break; }
+      const ext = (f.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+      const path = `admin/${Date.now()}-${S.prodPhotos.length}-${slugify(prodName).slice(0, 40) || 'product'}.${ext}`;
+      const up = await T.sb.storage.from('product-images').upload(path, f, {
+        contentType: f.type || 'image/jpeg',
+                                        cacheControl: '3600',
+                                        upsert: false,
+      });
+      const m = dbMsg(up, `Upload failed for “${f.name}”.`);
+      if (m) { T.toast(m); continue; }
+      S.prodPhotos.push({
+        url: T.sb.storage.from('product-images').getPublicUrl(path).data.publicUrl,
+        name: f.name,
+      });
+      paintGallery();
+      added += 1;
+    }
+    if (added) T.toast(`${added} photo${added > 1 ? 's' : ''} added.`);
+  }
+
+  function removePhoto(i) {
+    const shot = S.prodPhotos[i];
+    if (!shot) return;
+    S.prodPhotos.splice(i, 1);
+    if (S.prodCover >= S.prodPhotos.length) S.prodCover = Math.max(0, S.prodPhotos.length - 1);
+    const path = bucketPathOf(shot.url);
+    if (path) {
+      // best-effort cleanup — a frozen bucket object is harmless vs. breaking UX
+      T.sb.storage.from('product-images').remove([path]).catch(() => {});
+    }
+    paintGallery();
+  }
+
+  function setCover(i) { S.prodCover = i; paintGallery(); T.toast('Main photo updated.'); }
+
+  function bucketPathOf(url) {
+    try { const u = new URL(url); return u.pathname.split('/storage/v1/object/public/product-images/')[1] || null; }
+    catch { return null; }
+  }
+
+  function paintGallery() {
+    const grid = document.getElementById('prod-gallery');
+    const count = document.getElementById('prod-count');
+    count.textContent = `${S.prodPhotos.length} / ${MAX_PHOTOS}` + (S.prodPhotos.length === MAX_PHOTOS ? ' — limit reached' : ' photos');
+    if (!S.prodPhotos.length) {
+      grid.hidden = true;
+      grid.innerHTML = '';
+      return;
+    }
+    grid.hidden = false;
+    grid.innerHTML = S.prodPhotos.map((ph, i) => `
+      <div class="gal-thumb${i === S.prodCover ? ' is-cover' : ''}">
+        <img src="${ph.url}" alt="${T.esc(ph.name || 'Product photo ' + (i + 1))}" loading="lazy">
+        ${i === S.prodCover ? '<span class="gal-cov">Cover</span>' : ''}
+        <button class="gal-x" type="button" data-rm="${i}" aria-label="Remove photo ${i + 1}" title="Remove">×</button>
+        <button class="gal-cov-btn" type="button" data-cov="${i}" ${i === S.prodCover ? 'hidden' : ''}>Set as main</button>
+      </div>`).join('');
+  }
+
   function openProductForm(id) {
     const form = document.getElementById('prod-form');
     const p = id ? S.products.find((x) => x.id === id) : null;
@@ -402,18 +492,19 @@ window.TOF = window.TOF || {};
     document.getElementById('prod-price').value = p ? num(p.price) : '';
     document.getElementById('prod-orig').value = p && p.original_price ? num(p.original_price) : '';
     document.getElementById('prod-stock').value = p ? p.stock : '';
-    document.getElementById('prod-img').value = p ? (p.image_url || '') : '';
     document.getElementById('prod-desc').value = p ? (p.description || '') : '';
     document.getElementById('prod-newflag').checked = p ? !!p.is_new : false;
     document.getElementById('prod-best').checked = p ? !!p.is_best_seller : false;
     document.getElementById('prod-active').checked = p ? !!p.is_active : true;
 
-    S.uploadedFile = null;
-    const file = document.getElementById('prod-img-file');
-    file.value = '';
-    const prev = document.getElementById('prod-preview');
-    const url = p ? img(p.image_url) : '';
-    if (url) { prev.src = url; prev.hidden = false; } else { prev.hidden = true; }
+    // gallery: existing photos from the images column (legacy rows mirror in save path)
+    const photos = Array.isArray(p && p.images) ? p.images.filter((u) => typeof u === 'string' && u) : [];
+    S.prodPhotos = photos.map((u) => ({ url: u, name: 'product' + u.slice(-4) }));
+    const cover = p ? (p.image_url || '') : '';
+    const coverIdx = S.prodPhotos.findIndex((ph) => ph.url === cover);
+    S.prodCover = coverIdx >= 0 ? coverIdx : 0;
+    paintGallery();
+    document.getElementById('prod-img-file').value = '';
 
     form.hidden = false;
     form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -435,26 +526,19 @@ window.TOF = window.TOF || {};
       T.toast('Name, category and a valid price are required.');
       return;
     }
+    if (!S.prodPhotos.length) {
+      T.toast('Add at least one product photo (it becomes the main image).');
+      return;
+    }
 
     saveBtn.disabled = true;
     saveBtn.innerHTML = '<span class="spinner"></span> Saving…';
     try {
-      let image_url = document.getElementById('prod-img').value.trim();
-
-      // upload chosen file (admin-only via storage RLS)
-      if (S.uploadedFile) {
-        const f = S.uploadedFile;
-        const ext = (f.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
-        const path = `admin/${Date.now()}-${slugify(name).slice(0, 60) || 'product'}.${ext}`;
-        const up = await T.sb.storage.from('product-images').upload(path, f, {
-          contentType: f.type || 'image/jpeg',
-                                          cacheControl: '3600',
-                                          upsert: false,
-        });
-        const m = dbMsg(up, 'Image upload failed.');
-        if (m) { T.toast(m); throw new Error('upload'); }
-        image_url = T.sb.storage.from('product-images').getPublicUrl(path).data.publicUrl;
-      }
+      // photos were uploaded on selection; order cover-first and mirror it in
+      // image_url so cards, cart line items and order history keep working
+      const ordered = S.prodPhotos.slice();
+      if (S.prodCover > 0) ordered.unshift(...ordered.splice(S.prodCover, 1));
+      const images = ordered.map((ph) => ph.url);
 
       const originalRaw = document.getElementById('prod-orig').value;
       const payload = {
@@ -462,7 +546,8 @@ window.TOF = window.TOF || {};
         description: document.getElementById('prod-desc').value.trim(),
         price: Math.round(price * 100) / 100,
         original_price: originalRaw === '' ? null : Math.round(num(originalRaw) * 100) / 100,
-        image_url: image_url || '',
+        image_url: images[0] || '',
+        images,
         category_id,
         stock: Math.max(0, Math.trunc(num(document.getElementById('prod-stock').value))),
         is_new: document.getElementById('prod-newflag').checked,
@@ -480,7 +565,8 @@ window.TOF = window.TOF || {};
 
       T.toast(id ? 'Product updated.' : 'Product added to the shop.');
       document.getElementById('prod-form').hidden = true;
-      S.uploadedFile = null;
+      S.prodPhotos = [];
+      S.prodCover = 0;
       await loadAll();
       paintTab();
     } catch { /* toast already shown */ }

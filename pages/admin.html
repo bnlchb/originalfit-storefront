@@ -178,16 +178,14 @@
                   <label for="prod-stock">Stock</label>
                   <input id="prod-stock" type="number" min="0" step="1" placeholder="42" required>
                 </div>
-                <div class="field">
-                  <label for="prod-img">Image URL</label>
-                  <input id="prod-img" type="url" placeholder="https://… (or upload below)">
-                </div>
                 <div class="field field-wide">
-                  <label for="prod-img-file">…or upload image (product-images bucket)</label>
-                  <input id="prod-img-file" type="file" accept="image/*">
-                </div>
-                <div class="field">
-                  <img id="prod-preview" class="img-preview" alt="Product preview" hidden>
+                  <label>Product photos — up to 10 · drag &amp; drop supported · the first photo is the cover</label>
+                  <div class="dropzone" id="prod-drop" tabindex="0" role="button" aria-label="Add product photos">
+                    <span class="dz-hint">Drop photos here, or <b>browse…</b></span>
+                    <span class="dz-count" id="prod-count">0 / 10 photos</span>
+                  </div>
+                  <input id="prod-img-file" type="file" accept="image/*" multiple hidden>
+                  <div class="gal-grid" id="prod-gallery" hidden></div>
                 </div>
                 <div class="field field-wide">
                   <label for="prod-desc">Description</label>

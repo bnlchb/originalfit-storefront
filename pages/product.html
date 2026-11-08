@@ -110,10 +110,14 @@
 
         <!-- product details -->
         <div class="pdp-grid" id="pdp-root">
-          <div class="pdp-media reveal">
+          <div class="pdp-media reveal" id="pdp-media">
             <img id="pdp-img" src="" alt="Product image" loading="eager">
             <span class="badge" id="pdp-badge" hidden></span>
+            <p class="g-count" id="pdp-count" hidden></p>
+            <button class="g-arrow is-prev" id="pdp-prev" type="button" aria-label="Previous photo" hidden>←</button>
+            <button class="g-arrow is-next" id="pdp-next" type="button" aria-label="Next photo" hidden>→</button>
           </div>
+          <div class="pdp-thumbs" id="pdp-thumbs" hidden></div>
 
           <div class="pdp-sticky reveal" style="--d:90ms">
             <p class="pdp-cat" id="pdp-cat">—</p>

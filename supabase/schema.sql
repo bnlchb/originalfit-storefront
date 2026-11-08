@@ -45,6 +45,8 @@ create table if not exists public.products (
   price           numeric(10,2) not null check (price >= 0),
   original_price  numeric(10,2)          check (original_price is null or original_price >= 0),
   image_url       text          not null,
+  images          jsonb         not null default '[]'::jsonb
+                    check (jsonb_typeof(images) = 'array' and jsonb_array_length(images) <= 10),
   category_id     bigint        not null references public.categories (id) on delete restrict,
   stock           integer       not null default 0 check (stock >= 0),
   is_new          boolean       not null default false,
@@ -665,6 +667,13 @@ insert into public.categories (slug, name, image_url, description) values
    'https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=1200&auto=format&fit=crop',
    'Heavyweight comfort layers built for every day.')
 on conflict (slug) do nothing;
+
+-- multi-photo mirror (0008): legacy single-photo rows become galleries
+update public.products
+   set images = jsonb_build_array(image_url)
+ where images = '[]'::jsonb
+   and image_url is not null
+   and image_url <> '';
 
 -- ============================================================================
 -- DONE. RLS is on; the anon key can safely ship to the browser.
