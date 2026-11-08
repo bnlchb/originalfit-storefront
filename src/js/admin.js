@@ -380,9 +380,16 @@ window.TOF = window.TOF || {};
         del.disabled = false;
         const m = dbMsg(res);
         if (m) { T.toast(m); return; }
+        // remove the deleted product's own storage photos — rows vanish, but
+        // without this the bucket fills with unreferenced copies over time
+        (Array.isArray(p.images) ? p.images : []).concat(p.image_url || [])
+          .filter(Boolean).forEach((u) => {
+            const path = bucketPathOf(u);
+            if (path) T.sb.storage.from('product-images').remove([path]).catch(() => {});
+          });
         S.products = S.products.filter((x) => x.id !== id);
         paintStats(); paintProducts();
-        T.toast('Product deleted.');
+        T.toast('Product deleted and its photos removed.');
       }
     });
   }
@@ -456,8 +463,16 @@ window.TOF = window.TOF || {};
     if (S.prodCover >= S.prodPhotos.length) S.prodCover = Math.max(0, S.prodPhotos.length - 1);
     const path = bucketPathOf(shot.url);
     if (path) {
-      // best-effort cleanup — a frozen bucket object is harmless vs. breaking UX
-      T.sb.storage.from('product-images').remove([path]).catch(() => {});
+      /* Delete the bucket object only when NO other product still references
+         this URL — two rows sharing a photo means deleting the file breaks
+         the other product's card. Editing the form's own product is allowed. */
+      const formId = Number(document.getElementById('prod-id').value || -1);
+      const stillUsed = S.products.some((q) =>
+        Number(q.id) !== formId && q.images.includes(shot.url));
+      if (!stillUsed) {
+        // best-effort cleanup — a frozen bucket object is harmless vs. breaking UX
+        T.sb.storage.from('product-images').remove([path]).catch(() => {});
+      }
     }
     paintGallery();
   }
@@ -563,15 +578,26 @@ window.TOF = window.TOF || {};
       return;
     }
 
+    // photos were uploaded on selection; order cover-first and mirror it in
+    // image_url so cards, cart line items and order history keep working —
+    // and dedupe (a URL picked twice should never appear twice on a card)
+    const ordered = S.prodPhotos.slice();
+    if (S.prodCover > 0) ordered.unshift(...ordered.splice(S.prodCover, 1));
+    const images = [...new Set(ordered.map((ph) => ph.url))];
+
+    /* every product shows ITS OWN photos: refuse to silently save a set that
+       another product already wears (each card renders its row's image_url) */
+    const formId = Number(document.getElementById('prod-id').value || -1);
+    const dupeOwner = S.products.find((q) =>
+      Number(q.id) !== formId && q.images.some((u) => images.includes(u)));
+    if (dupeOwner) {
+      const go = confirm(`This photo is already used by “${dupeOwner.name}”. Saving it here means both cards show the same image — save anyway?`);
+      if (!go) return;
+    }
+
     saveBtn.disabled = true;
     saveBtn.innerHTML = '<span class="spinner"></span> Saving…';
     try {
-      // photos were uploaded on selection; order cover-first and mirror it in
-      // image_url so cards, cart line items and order history keep working
-      const ordered = S.prodPhotos.slice();
-      if (S.prodCover > 0) ordered.unshift(...ordered.splice(S.prodCover, 1));
-      const images = ordered.map((ph) => ph.url);
-
       // per-size stock (0009) — zero is allowed; an all-zero product simply
       // shows as out of stock on the storefront
       const sizeRows = Array.from(document.querySelectorAll('#prod-sizes .sz-cell input'))
