@@ -427,7 +427,8 @@ body.solid-header .site-header { background: rgba(255, 255, 255, .92); backdrop-
 .lg-spin {
   fill: none; stroke: currentColor; stroke-width: 1.4;
   stroke-dasharray: 2 9;
-  transform-origin: 100px 100px;
+  transform-box: view-box;
+  transform-origin: 100px 100px;    /* center of the ring (viewBox units) */
   animation: logo-spin 16s linear infinite;
 }
 .lg-mono { font-size: 56px; font-weight: 900; letter-spacing: 8px; fill: currentColor; }
