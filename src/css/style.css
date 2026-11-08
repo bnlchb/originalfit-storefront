@@ -947,15 +947,14 @@ color: #fff;
 }
 .chip:hover { border-color: var(--ink); }
 .chip.is-on { background: var(--ink); border-color: var(--ink); color: var(--white); }
-/* unavailable size — greyed, struck-through, inert (0009 per-size stock) */
+/* unavailable size — dark grey, struck-through, inert (0009 per-size stock) */
 .chip.is-out {
-  color: var(--muted-light);
+  color: var(--line-dark);
   background: var(--bg-alt);
   border-style: dashed;
   text-decoration: line-through;
   text-decoration-thickness: 1px;
   cursor: not-allowed;
-  opacity: .8;
 }
 .chip.is-out:hover { border-color: var(--line); pointer-events: none; }
 .chip:disabled { pointer-events: none; }
@@ -1432,6 +1431,7 @@ body.lb-open { overflow: hidden; }
 .size-chips .chip:not(:disabled):hover { transform: translateY(-1.5px); }
 .size-chips .chip.is-on { background: var(--ink); color: var(--white); }
 .size-hint { font-size: .72rem; color: var(--muted-light); }
+.size-hint.is-out { color: var(--line-dark); font-weight: 700; }
 .size-hint { font-size: .72rem; color: var(--muted-light); }
 
 .pdp-buy { display: flex; gap: .8rem; margin-top: 1.6rem; }
@@ -1461,6 +1461,7 @@ body.lb-open { overflow: hidden; }
 
 .pdp-perks { margin-top: 1.5rem; display: grid; gap: .55rem; }
 .perk { display: flex; align-items: center; gap: .7em; font-size: .8rem; color: var(--muted); }
+.perk.is-out { color: var(--line-dark); font-weight: 700; }
 .perk svg { width: 16px; height: 16px; flex: none; opacity: .7; }
 
 .pdp-accordions { margin-top: 1.8rem; border-top: 1px solid var(--line); }

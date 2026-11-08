@@ -624,7 +624,9 @@ window.TOF = window.TOF || {};
       save.hidden = false;
       save.textContent = 'SAVE ' + Math.round((1 - p.price / p.originalPrice) * 100) + '%';
     }
-    qs('#pdp-stock').textContent = p.stock > 0 ? 'In stock and ready to ship' : 'Out of stock';
+    const stockLine = qs('#pdp-stock');
+    stockLine.classList.toggle('is-out', !(Number(p.stock) > 0));
+    stockLine.textContent = p.stock > 0 ? 'In stock and ready to ship' : 'Out of stock';
 
     // sizes — the six canonical chips. Per-size rows (migration 0009) are
     // authoritative when configured; a product without them keeps the legacy
@@ -649,6 +651,7 @@ window.TOF = window.TOF || {};
         c.classList.toggle('is-on', c.dataset.size === size);
         c.setAttribute('aria-pressed', String(c.dataset.size === size));
       });
+      sizeHint.classList.toggle('is-out', !size);
       sizeHint.textContent = size ? `Size ${size} selected` : 'Out of stock';
     };
     chipsWrap.addEventListener('click', (e) => {
