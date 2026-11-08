@@ -28,6 +28,7 @@ database that has data).
 | 0003 | `0003_guest_checkout.sql` | Guest checkout: anon inserts for null-user orders + items |
 | 0004 | `0004_secure_order_creation.sql` | All order creation moves behind a security-definer `create_order()` — server re-prices from `products`, no more anon/authenticated direct INSERT policies, `client_ref` idempotency |
 | 0005 | `0005_fix_create_order_null_total.sql` | Fixes 23502 (total_amount NULL) from 0004: PL/pgSQL `SELECT…INTO` with no rows nulls the accumulators — re-init on miss + hardened concurrent-submit fallback |
+| 0006 | `0006_admin_login_throttle.sql` | Server-side admin sign-in throttle: `admin_login_attempts` ledger (RLS ON, zero policies) + `admin_login_lock()` — 1/5/15/30/60-min locks after every 5 failures per identifier (24h window) + 10-min IP spray guard; a success wipes the key; passwords never stored |
 
 ## Changing the schema later
 

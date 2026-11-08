@@ -58,7 +58,7 @@ window.TOF = window.TOF || {};
     const m = res.error.message || '';
     console.warn('[TOF admin]', m);
     if (/row.level|permission/i.test(m)) {
-      return 'Server refused — run supabase/migrations/0002_admin_console_rls.sql and promote this account (is_admin = true).';
+      return 'Server refused this operation — your session may have expired. Sign in again.';
     }
     if (/foreign key/i.test(m)) {
       return 'Still referenced elsewhere — move or delete the related rows first.';
@@ -86,11 +86,7 @@ window.TOF = window.TOF || {};
     if (res.error) {
       console.warn('[TOF admin] profile read failed:', res.error.message);
       show(document.getElementById('admin-denied'));
-      const msg = document.getElementById('denied-msg');
-      msg.textContent = 'Could not verify your account (' + res.error.message + ').'
-        + (res.error.message.indexOf('is_admin') !== -1
-          ? ' Run supabase/migrations/0002_admin_console_rls.sql first — it adds the is_admin column.'
-          : '');
+      document.getElementById('denied-msg').textContent = 'Could not verify your access right now. Please try again in a moment.';
       return;
     }
 
@@ -104,6 +100,54 @@ window.TOF = window.TOF || {};
     }
 
     bootConsole();
+  }
+
+  /* ------------------------------------------------- admin sign-in gate -- */
+  /* Throttle state is SERVER-side (admin_login_attempts, migration 0006):
+     refreshed pages, second tabs and cleared localStorage cannot bypass it —
+     every submit re-checks the live server state before touching Supabase Auth. */
+  let lockTimer = null;
+
+  /** Server ledger call: p_success null → status only, true → success (wipe),
+      false → record a failed attempt. Returns {locked, retry_after, fails}. */
+  async function gateLock(email, success) {
+    if (!T.sb) return null;
+    try {
+      const { data, error } = await T.sb.rpc('admin_login_lock', { p_login: email, p_success: success });
+      if (error) { console.warn('[TOF admin] throttle:', error.message); return null; }
+      return data || null;
+    } catch { console.warn('[TOF admin] throttle unreachable'); return null; }
+  }
+
+  /** Show the lockout message with a live countdown; disable "Enter Admin
+      Console"; automatically re-enable when the server-declared wait ends. */
+  function applyLock(state) {
+    const btn = document.getElementById('gate-submit');
+    const err = document.getElementById('gate-error');
+    const lockEl = document.getElementById('gate-lock');
+    err.hidden = true;
+    if (lockTimer) { clearInterval(lockTimer); lockTimer = null; }
+    let left = Math.max(1, Number(state.retry_after) || 1);
+
+    const paint = () => {
+      const mm = Math.floor(left / 60), ss = String(left % 60).padStart(2, '0');
+      lockEl.textContent = 'Too many failed login attempts. Please try again in '
+        + (mm >= 1 ? mm + (mm === 1 ? ' minute — ' : ' minutes — ') : '') + mm + ':' + ss + '.';
+      lockEl.hidden = false;
+    };
+    paint();
+
+    btn.disabled = true;
+    btn.textContent = 'Locked';
+
+    lockTimer = setInterval(() => {
+      left -= 1;
+      if (left > 0) { paint(); return; }
+      clearInterval(lockTimer); lockTimer = null;
+      lockEl.hidden = true;
+      btn.disabled = false;
+      btn.textContent = 'Enter Admin Console';
+    }, 1000);
   }
 
   function wireGate() {
@@ -133,18 +177,38 @@ window.TOF = window.TOF || {};
       const email = document.getElementById('gate-email').value.trim();
       const pw = document.getElementById('gate-pw').value;
       err.hidden = true;
+      if (!email || !pw) { err.textContent = 'Please fill in both fields.'; err.hidden = false; return; }
+
       btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Checking…';
+
+      /* server decides: locked? (status-only call — never an attempt) */
+      let state = await gateLock(email, null);
+      if (state && state.locked) { applyLock(state); return; }
+
       btn.innerHTML = '<span class="spinner"></span> Signing in…';
       const res = await T.auth.signIn(email, pw);
-      btn.disabled = false;
-      btn.textContent = 'Enter Admin Console';
-      if (!res.ok) {
-        err.textContent = res.error || 'Sign-in failed.';
-        err.hidden = false;
+
+      /* report the outcome to the server ledger:
+         success → wipes this identifier's failures; failure → counted */
+      state = await gateLock(email, res.ok);
+
+      if (res.ok) {
+        btn.disabled = false;
+        btn.textContent = 'Enter Admin Console';
+        T.toast('Welcome back.');
+        await gate();
         return;
       }
-      T.toast('Welcome back.');
-      await gate();
+
+      /* could the 5th+ failure have tripped the server lock just now? */
+      if (state && state.locked) { applyLock(state); return; }
+
+      /* generic failure — never reveals whether the email exists */
+      btn.disabled = false;
+      btn.textContent = 'Enter Admin Console';
+      err.textContent = 'Invalid email or password.';
+      err.hidden = false;
     });
 
     document.getElementById('denied-recheck').addEventListener('click', () => gate());

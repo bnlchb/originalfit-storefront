@@ -94,11 +94,9 @@
               </div>
             </div>
             <p class="form-error" id="gate-error" hidden></p>
+            <p class="form-error" id="gate-lock" hidden></p>
             <button class="btn" type="submit" id="gate-submit">Enter Admin Console</button>
           </form>
-          <p class="admin-mini">No admin account yet? Supabase Dashboard → Authentication → Users →
-            <b>Add user</b> (enable <i>Auto Confirm</i>), then promote it with the promotion UPDATE
-            inside <code>supabase/migrations/0002_admin_console_rls.sql</code>.</p>
           <p class="admin-mini">Prefer the storefront sign-in? <a class="u" id="gate-login-link" href="login.html">Go to login page</a></p>
         </div>
 
@@ -106,8 +104,7 @@
         <div class="panel-card admin-gate" id="admin-denied" hidden>
           <h2>Not an administrator</h2>
           <p class="admin-note" id="denied-msg">You are signed in, but this account has no admin rights.</p>
-          <p class="admin-note">Run the admin migration <code>supabase/migrations/0002_admin_console_rls.sql</code>
-            and the promotion UPDATE for this account's email, then press “Re-check access”.</p>
+          <p class="admin-note">If you believe this is a mistake, contact the site owner for access.</p>
           <div class="btn-row">
             <button class="btn btn-outline btn-sm" id="denied-recheck" type="button">Re-check access</button>
             <button class="btn btn-sm" id="denied-signout" type="button">Sign out</button>
