@@ -534,8 +534,10 @@ body.solid-header .site-header { background: rgba(255, 255, 255, .92); backdrop-
 
 /* FIXED, UNIFORM, SQUARE product frame — every product image on the site
    (shop, home sections, related, wishlist) renders inside this exact box:
-   1:1, pure white, contain-centered with a 15px inset, never cropped,
-   never stretched, and the frame's dimensions never follow the photo. */
+   1:1, pure white, contain-centered, never cropped, never stretched, and
+   the frame's dimensions never follow the photo. No inner padding — the
+   photo uses the full frame (contain adds only the bare letterbox its own
+   aspect requires). */
 .p-media {
   position: relative;
   width: 100%;
@@ -545,7 +547,6 @@ body.solid-header .site-header { background: rgba(255, 255, 255, .92); backdrop-
   align-items: center;
   justify-content: center;
   background: #FFFFFF;
-  padding: 15px;
   box-sizing: border-box;
   border-radius: 6px;
   border: 1px solid var(--line);
@@ -1229,7 +1230,7 @@ color: #fff;
   align-items: start;
 }
 /* FIXED SQUARE gallery frame — same white box model as the product cards:
-   1:1, contain-centered with a 15px inset; photo placement never resizes it */
+   1:1, contain-centered, no inner padding; photo placement never resizes it */
 .pdp-media {
   position: relative;
   border-radius: 8px;
@@ -1240,7 +1241,6 @@ color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 15px;
   box-sizing: border-box;
   isolation: isolate;
 }
