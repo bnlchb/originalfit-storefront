@@ -28,6 +28,7 @@ window.TOF = window.TOF || {};
     activeTab: 'products',
     prodPhotos: [],     // [{url, name}] — uploaded photos for the product form
     prodCover: 0,       // index of the cover photo within prodPhotos
+    prodSaving: false,  // re-entry lock — one save in flight at a time
   };
   const MAX_PHOTOS = 10;
 
@@ -226,6 +227,9 @@ window.TOF = window.TOF || {};
 
   /* ------------------------------------------------------------ console -- */
   function bootConsole() {
+    /* idempotent: re-login cycles and auth events must never wire the console
+       twice — stacked submit listeners make one Save click post products twice */
+    if (S.console) return;
     S.console = true;
     show(document.getElementById('admin-console'));
     const who = document.getElementById('admin-who');
@@ -249,11 +253,6 @@ window.TOF = window.TOF || {};
     wireMessages();
 
     loadAll().then(() => { paintStats(); paintTab(); });
-
-    document.addEventListener('tof:auth', () => {
-      if (S.console) return;     // console stays until sign-out above
-      gate();
-    });
   }
 
   function wireTabs() {
@@ -564,7 +563,21 @@ window.TOF = window.TOF || {};
       || '<option value="">— add a category first —</option>';
   }
 
+  /* wrapper: hard re-entry lock — stacked submit listeners, a double click or
+     an Enter-key submit can all queue a second run; only the first may save */
   async function saveProduct() {
+    if (S.prodSaving) return;
+    S.prodSaving = true;
+    try {
+      await saveProductRun();
+    } finally {
+      S.prodSaving = false;
+      const saveBtn = document.getElementById('prod-save');
+      if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save product'; }
+    }
+  }
+
+  async function saveProductRun() {
     const saveBtn = document.getElementById('prod-save');
     const name = document.getElementById('prod-name').value.trim();
     const category_id = Number(document.getElementById('prod-cat').value) || null;
