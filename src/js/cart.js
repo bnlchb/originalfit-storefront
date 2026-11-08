@@ -28,32 +28,54 @@ window.TOF = window.TOF || {};
 
   const keyOf = (id, size) => `${id}:${size}`;
 
+  /* Canonical size ladder (0009) — shown in drawer + cart page. */
+  const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+
+  /* How many of `size` can still be added for a product line with the given
+     per-size snapshot (item.sizes captured at add time and refreshed on every
+     catalog prune). Legacy products without size rows have no per-size cap —
+     the server (create_order) still enforces the product-level stock. */
+  const capFor = (snapshot, size) => {
+    if (!Array.isArray(snapshot) || !snapshot.length) return 99;
+    const row = snapshot.find((x) => x.size === size) || {};
+    return Math.max(0, Number(row.stock) || 0);
+  };
+
   /* ------------------------------------------------------------------ API -- */
   function add(product, size = 'M', qty = 1) {
+    const want = Math.max(1, Math.min(Number(qty) || 1, 99));
+    const snap = Array.isArray(product.sizes) ? product.sizes : null;
+    const cap = capFor(snap, size);
     const k = keyOf(product.id, size);
     const existing = items.find((it) => it.key === k);
+    const current = existing ? existing.qty : 0;
+    if (cap <= current) return 'blocked';
+    const finalQty = current + Math.min(want, cap - current);
+
     if (existing) {
-      existing.qty = Math.min(existing.qty + qty, 99);
-      save(); emit();
-      return 'increased';
+      existing.qty = finalQty;
+    } else {
+      items.push({
+        key: k,
+        id: product.id,
+        name: product.name,
+        price: Number(product.price),
+        imageUrl: product.imageUrl,
+        size,
+        qty: finalQty,
+        sizes: snap, // per-size snapshot for cart-side availability
+      });
     }
-    items.push({
-      key: k,
-      id: product.id,
-      name: product.name,
-      price: Number(product.price),
-      imageUrl: product.imageUrl,
-      size,
-      qty: Math.max(1, Math.min(Number(qty) || 1, 99)),
-    });
     save(); emit();
-    return 'added';
+    return current + want <= cap ? 'added' : 'clamped';
   }
 
   function setQty(key, qty) {
     const it = items.find((i) => i.key === key);
     if (!it) return;
-    it.qty = Math.max(1, Math.min(Number(qty) || 1, 99));
+    const cap = capFor(it.sizes, it.size);
+    const max = Math.max(1, Math.min(cap, 99)); // cap 0 → hold at 1; server rejects at checkout
+    it.qty = Math.max(1, Math.min(Number(qty) || 1, max));
     save(); emit();
   }
 
@@ -61,14 +83,24 @@ window.TOF = window.TOF || {};
     const it = items.find((i) => i.key === key);
     if (!it || it.size === size) return;
     const merged = items.find((o) => o.key === keyOf(it.id, size));
+    /* availability comes from whichever line carries the freshest snapshot */
+    const snap = Array.isArray(merged && merged.sizes) && (merged.sizes || []).length
+      ? merged.sizes
+      : (Array.isArray(it.sizes) && it.sizes.length ? it.sizes : null);
+    const cap = capFor(snap, size);
+    const combined = (merged ? merged.qty : 0) + it.qty;
+    if (cap <= 0) return 'blocked';
+    const finalQty = Math.min(combined, Math.max(1, cap));
     if (merged) {
-      merged.qty = Math.min(merged.qty + it.qty, 99);
+      merged.qty = finalQty;
       items = items.filter((i) => i.key !== key);
     } else {
       it.key = keyOf(it.id, size);
       it.size = size;
+      it.qty = finalQty;
     }
     save(); emit();
+    return finalQty < combined ? 'clamped' : 'added';
   }
 
   function remove(key) {
@@ -133,13 +165,19 @@ window.TOF = window.TOF || {};
   }
 
   function itemHTML(it) {
+    const snap = Array.isArray(it.sizes) && it.sizes.length ? it.sizes : null;
+    const chipFor = (s) => {
+      const row = snap && (snap.find((x) => x.size === s) || {});
+      const out = snap ? ((row.stock || 0) <= 0) : false;
+      return `<button type="button" class="chip${s === it.size ? ' is-on' : ''}${out ? ' is-out' : ''}" aria-pressed="${s === it.size}"${out ? ' disabled title="Out of stock"' : ''} data-size="${s}">${s}</button>`;
+    };
     return `
       <div class="cart-item" data-key="${it.key}">
         <img src="${it.imageUrl}" alt="${T.esc(it.name)}">
         <div class="ci-info">
           <h4 class="ci-name"><a href="${T.url('product.html?id=' + encodeURIComponent(it.id))}">${T.esc(it.name)}</a></h4>
           <div class="ci-size-chips" data-key="${it.key}">
-            ${SIZES.map((s) => `<button type="button" class="chip${s === it.size ? ' is-on' : ''}" data-size="${s}">${s}</button>`).join('')}
+            ${SIZES.map(chipFor).join('')}
           </div>
           <div class="ci-qty">
             <button type="button" data-step="-1" aria-label="Decrease quantity">−</button>
@@ -154,8 +192,7 @@ window.TOF = window.TOF || {};
       </div>`;
   }
 
-  /* size chips live in both drawer + page */
-  const SIZES = ['S', 'M', 'L', 'XL'];
+  /* size chips live in both drawer + page (SIZES declared above) */
   let ship = 0;
 
   function cartItemDelegation(container, { withSize = true } = {}) {
@@ -171,7 +208,11 @@ window.TOF = window.TOF || {};
       if (rmBtn) { remove(rmBtn.dataset.remove); return; }
       if (withSize) {
         const sizeBtn = e.target.closest('[data-size]');
-        if (sizeBtn && key) setSize(key, sizeBtn.dataset.size);
+        if (sizeBtn && key) {
+          const res = setSize(key, sizeBtn.dataset.size);
+          if (res === 'blocked') T.toast(`Size ${sizeBtn.dataset.size} is out of stock.`);
+          else if (res === 'clamped') T.toast('Limited stock in that size — quantity adjusted.');
+        }
       }
     });
   }
@@ -271,19 +312,35 @@ window.TOF = window.TOF || {};
   /* Cart lines capture name/price/image at add-time. If a product is deleted
      or deactivated in the backend, the line becomes a ghost: it renders from
      the snapshot and fails checkout with an FK error. Re-resolve against the
-     live catalog once when the page boots and drop anything not in it. */
+     live catalog once when the page boots: drop anything not in it, refresh
+     the per-size snapshot and clamp quantities to current size stock. */
   async function pruneAgainstCatalog() {
     try {
       await T.whenReady();
       if (T.mode !== 'supabase' || !T.products) return; // backend down → never nuke the local cart
       const live = await T.products.list({});
-      const valid = new Set(live.map((p) => Number(p.id)));
-      const known = items.filter((it) => valid.has(Number(it.id)));
-      if (known.length === items.length) return;
-      const dropped = items.length - known.length;
+      const byId = new Map(live.map((p) => [Number(p.id), p]));
+      const known = [];
+      let dropped = 0;
+      let dirty = false;
+      for (const it of items) {
+        const p = byId.get(Number(it.id));
+        if (!p) { dropped++; dirty = true; continue; }
+        if (Array.isArray(p.sizes) && p.sizes.length) {
+          it.sizes = p.sizes; // refresh availability snapshot
+          dirty = true;
+          const cap = capFor(it.sizes, it.size);
+          if (cap <= 0) { dropped++; continue; } // this size is no longer available
+          const clamped = Math.max(1, Math.min(it.qty, cap));
+          if (clamped !== it.qty) dirty = true;
+          it.qty = clamped;
+        }
+        known.push(it);
+      }
+      if (!dirty) return;
       items = known;
+      if (dropped) T.toast(`${dropped} item${dropped === 1 ? '' : 's'} no longer available — removed from your cart.`);
       save(); emit();
-      T.toast(`${dropped} item${dropped === 1 ? '' : 's'} no longer available — removed from your cart.`);
     } catch { /* best-effort; the cart keeps working locally */ }
   }
   pruneAgainstCatalog();

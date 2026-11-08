@@ -320,7 +320,7 @@ window.TOF = window.TOF || {};
         <ul class="order-items">
           ${(o.items || []).map((it) => `
             <li>
-              <span>${it.quantity} × ${T.esc((it.product && it.product.name) || 'Item')}</span>
+              <span>${it.quantity} × ${T.esc((it.product && it.product.name) || 'Item')}${it.size ? ` <span class="oi-size">size ${T.esc(it.size)}</span>` : ''}</span>
               <span>${T.money(it.unit_price * it.quantity)}</span>
             </li>`).join('')}
         </ul>

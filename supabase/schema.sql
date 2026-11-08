@@ -58,6 +58,41 @@ create table if not exists public.products (
 
 create index if not exists products_category_idx on public.products (category_id);
 create index if not exists products_active_idx   on public.products (is_active, created_at desc);
+-- ============================================================================
+-- 2b. PRODUCT SIZES — per-size stock (migration 0009)
+--     Optional per product: NO size rows → the product keeps the legacy
+--     behavior where all six sizes follow products.stock. The trigger keeps
+--     products.stock = sum(size rows) once size rows exist.
+-- ============================================================================
+create table if not exists public.product_sizes (
+  product_id bigint  not null references public.products (id) on delete cascade,
+  size       text    not null check (size in ('XS','S','M','L','XL','XXL')),
+  stock      integer not null default 0 check (stock >= 0),
+  primary key (product_id, size)
+);
+
+create or replace function public.sync_product_stock_total()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_pid bigint := coalesce(new.product_id, old.product_id);
+begin
+  update public.products p
+     set stock = coalesce((select sum(ps.stock)
+                             from public.product_sizes ps
+                            where ps.product_id = v_pid), 0)
+   where p.id = v_pid;
+  return null; -- AFTER trigger's return value is ignored
+end;
+$$;
+
+drop trigger if exists trg_sync_product_stock_total on public.product_sizes;
+create trigger trg_sync_product_stock_total
+after insert or update or delete on public.product_sizes
+for each row execute function public.sync_product_stock_total();
 create index if not exists products_name_idx     on public.products (lower(name));
 
 -- updated_at helper -----------------------------------------------------------
@@ -271,7 +306,8 @@ create table if not exists public.order_items (
   order_id    uuid          not null references public.orders (id) on delete cascade,
   product_id  bigint        references public.products (id) on delete set null,
   quantity    integer       not null check (quantity > 0),
-  unit_price  numeric(10,2) not null check (unit_price >= 0)
+  unit_price  numeric(10,2) not null check (unit_price >= 0),
+  size        text          not null default 'M' check (size in ('XS','S','M','L','XL','XXL'))
 );
 
 create index if not exists order_items_order_idx   on public.order_items (order_id);
@@ -321,6 +357,7 @@ create table if not exists public.contact_messages (
 
 alter table public.categories              enable row level security;
 alter table public.products                enable row level security;
+alter table public.product_sizes           enable row level security;
 alter table public.profiles                enable row level security;
 alter table public.orders                  enable row level security;
 alter table public.order_items             enable row level security;
@@ -350,7 +387,7 @@ $$;
 -- client INSERT policies after this section.
 -- ============================================================================
 create or replace function public.create_order(
-  p_items      jsonb,              -- [{"id": <product id>, "qty": 1..50}]
+  p_items      jsonb,              -- [{"id": <product id>, "qty": 1..50, "size": "M"}] — "size" optional (default "M")
   p_address    jsonb,              -- checkout form fields
   p_client_ref uuid default null   -- must be LAST: PG requires parameters after a defaulted one to have defaults too — supabase-js calls with named args, so order is irrelevant to the browser
 ) returns jsonb                    -- {"id", "subtotal", "shipping", "total"}
@@ -369,6 +406,7 @@ declare
   v_prod        public.products%rowtype;
   v_pid         bigint;
   v_qty         integer;
+  v_size        text;
   v_clean_items jsonb := '[]'::jsonb;
 begin
   -- idempotency: a retried submit returns the order it already created
@@ -417,15 +455,43 @@ begin
     end if;
     v_qty := (v_item->>'qty')::integer;
 
+    -- size: optional (payloads sent before 0009 keep ordering as "M")
+    v_size := upper(coalesce(nullif(btrim(v_item->>'size'), ''), 'M'));
+    if v_size not in ('XS','S','M','L','XL','XXL') then
+      raise exception 'Invalid size for product %.', v_pid;
+    end if;
+
     -- re-price from the live catalog: the browser's price is not trusted here
     select * into v_prod from public.products where id = v_pid and is_active = true;
     if not found then
-      raise exception 'Product % is not available.', v_prod.name;
+      raise exception 'Product % is not available.', coalesce(v_prod.name, v_pid::text);
+    end if;
+
+    -- stock: size rows are authoritative when they exist; for legacy products
+    -- (no size rows) the product-level stock is decremented as before
+    if exists (select 1 from public.product_sizes where product_id = v_pid) then
+      if not exists (select 1 from public.product_sizes where product_id = v_pid and size = v_size) then
+        raise exception 'Size % of "%" is not available.', v_size, v_prod.name;
+      end if;
+      -- atomic, race-safe decrement: stock >= qty is part of the predicate
+      update public.product_sizes
+         set stock = stock - v_qty
+       where product_id = v_pid and size = v_size and stock >= v_qty;
+      if not found then
+        raise exception 'Size % of "%" is out of stock for the requested quantity.', v_size, v_prod.name;
+      end if;
+    else
+      update public.products
+         set stock = stock - v_qty
+       where id = v_pid and stock >= v_qty;
+      if not found then
+        raise exception '"%" is out of stock for the requested quantity.', v_prod.name;
+      end if;
     end if;
 
     v_subtotal := v_subtotal + round(v_prod.price * v_qty, 2);
     v_clean_items := v_clean_items || jsonb_build_object(
-      'product_id', v_pid, 'quantity', v_qty, 'unit_price', v_prod.price);
+      'product_id', v_pid, 'quantity', v_qty, 'unit_price', v_prod.price, 'size', v_size);
   end loop;
 
   -- validate + sanitize the shipping address -----------------------------------
@@ -460,20 +526,18 @@ begin
       values (v_uid, v_total, v_addr, p_client_ref)
       returning id into v_order_id;
   exception when unique_violation then
-    -- a concurrent request claimed this client_ref; its row may not be
-    -- visible inside this transaction yet — fail cleanly with a retry hint
-    -- instead of writing order_items against a NULL order_id.
-    select id into v_order_id from public.orders where client_ref = p_client_ref;
-    if v_order_id is null then
-      raise exception 'Order is being processed — please try again in a moment.';
-    end if;
+    -- a concurrent request claimed this client_ref. Never adopt another
+    -- transaction's order: our size-stock decrements must roll back with us.
+    -- A retry re-enters the idempotency lookup above and returns same order.
+    raise exception 'Order is being processed — please try again in a moment.';
   end;
 
-  insert into public.order_items (order_id, product_id, quantity, unit_price)
+  insert into public.order_items (order_id, product_id, quantity, unit_price, size)
     select v_order_id,
            (e->>'product_id')::bigint,
            (e->>'quantity')::integer,
-           (e->>'unit_price')::numeric
+           (e->>'unit_price')::numeric,
+           (e->>'size')::text
       from jsonb_array_elements(v_clean_items) e;
 
   return jsonb_build_object('id', v_order_id, 'subtotal', v_subtotal,
@@ -482,7 +546,7 @@ end;
 $$;
 
 comment on function public.create_order(jsonb, jsonb, uuid) is
-  'Secure order creation: auth.uid() resolved server-side, prices re-read from public.products, address sanitized, totals computed here — client-supplied prices/totals/status are never trusted. Fixed in 0005: accumulator re-init after a no-row idempotency lookup.';
+  'Secure order creation (sizes edition, 0009): auth.uid() resolved server-side, prices re-read from public.products, per-item size validated against the canonical set, stock enforced and decremented per size (products.stock fallback for legacy rows), address sanitized, totals computed here. Size-stock decrement and order write share one transaction.';
 
 -- order writes are ONLY possible through create_order(); no anon/authenticated
 -- table-level INSERT survives (these guards also converge partially-migrated DBs)
@@ -512,6 +576,17 @@ create policy "products_public_read_active" on public.products
 
 drop policy if exists "products_admin_all" on public.products;
 create policy "products_admin_all" on public.products
+  for all to authenticated
+  using (public.is_admin())
+  with check (public.is_admin());
+
+-- product_sizes: public read (every size must show its availability) ----------
+drop policy if exists "product_sizes_public_read" on public.product_sizes;
+create policy "product_sizes_public_read" on public.product_sizes
+  for select to anon, authenticated using (true);
+
+drop policy if exists "product_sizes_admin_all" on public.product_sizes;
+create policy "product_sizes_admin_all" on public.product_sizes
   for all to authenticated
   using (public.is_admin())
   with check (public.is_admin());

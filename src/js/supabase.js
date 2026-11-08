@@ -215,7 +215,9 @@ window.TOF = window.TOF || {};
           const { data, error } = await T.sb.rpc('create_order', {
             p_client_ref: clientRef || null,
             p_address: address,     // untrusted: sanitized inside the function
-            p_items: (items || []).map((it) => ({ id: it.id, qty: it.qty })),
+            /* size is optional server-side (defaults "M") — legacy payload
+               shape without it keeps working (migration 0009) */
+            p_items: (items || []).map((it) => ({ id: it.id, qty: it.qty, size: it.size || 'M' })),
           });
           if (error) throw error;
           return { data: data || null, error: null };
@@ -236,7 +238,7 @@ window.TOF = window.TOF || {};
         async () => {
           const { data, error } = await T.sb
             .from('orders')
-            .select('id, total_amount, status, shipping_address, created_at, items:order_items(id, quantity, unit_price, product:products(id, name, image_url))')
+            .select('id, total_amount, status, shipping_address, created_at, items:order_items(id, quantity, unit_price, size, product:products(id, name, image_url))')
             .order('created_at', { ascending: false })
             .limit(20);
           return { data, error };

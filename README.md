@@ -176,7 +176,10 @@ messages, newsletter subscribers) — no dashboard digging required.
 Admin capabilities: add/edit/hide/delete products — each with up to **10 photos**
 uploaded straight to the `product-images` bucket (drag & drop, per-photo removal,
 cover selection; the cover is mirrored to `image_url` for cards/cart/orders and all
-photos are saved to `products.images`), manage categories, view all orders and move
-their status along `pending → paid → shipped → delivered / cancelled`, read/delete
-contact messages, manage the newsletter list. Ordered items keep their line even if
-the product is deleted (`on delete set null`).
+photos are saved to `products.images`) and **stock per size** (XS/S/M/L/XL/XXL,
+migration 0009: the set determines which sizes are orderable, a product without
+size rows keeps its single stock number, and `products.stock` auto-syncs to the
+size total), manage categories, view all orders and move their status along
+`pending → paid → shipped → delivered / cancelled`, read/delete contact messages,
+manage the newsletter list. Ordered items keep their line (with their size) even
+if the product is deleted (`on delete set null`).

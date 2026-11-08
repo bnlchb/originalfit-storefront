@@ -125,13 +125,19 @@ window.TOF = window.TOF || {};
 
   /* ---------------------------------------------------------- cart drawer -- */
   function drawerItemHTML(it) {
+    const snap = Array.isArray(it.sizes) && it.sizes.length ? it.sizes : null;
+    const chipFor = (s) => {
+      const row = snap && (snap.find((x) => x.size === s) || {});
+      const out = snap ? ((row.stock || 0) <= 0) : false;
+      return `<button type="button" class="chip${s === it.size ? ' is-on' : ''}${out ? ' is-out' : ''}" aria-pressed="${s === it.size}"${out ? ' disabled title="Out of stock"' : ''} data-size="${s}">${s}</button>`;
+    };
     return `
       <div class="cart-item" data-key="${it.key}">
         <img src="${it.imageUrl}" alt="${T.esc(it.name)}">
         <div class="ci-info">
           <h4 class="ci-name"><a href="${PRODUCTS_URL(it.id)}">${T.esc(it.name)}</a></h4>
           <div class="ci-size-chips">
-            ${T.cart.SIZES.map((s) => `<button type="button" class="chip${s === it.size ? ' is-on' : ''}" data-size="${s}">${s}</button>`).join('')}
+            ${T.cart.SIZES.map(chipFor).join('')}
           </div>
           <div class="ci-qty">
             <button type="button" data-step="-1" aria-label="Decrease quantity">−</button>
@@ -232,8 +238,23 @@ window.TOF = window.TOF || {};
         if (!p) return;
         addBtn.classList.add('added');
         setTimeout(() => addBtn.classList.remove('added'), 520);
-        const res = T.cart.add(p, 'M', 1);
-        T.toast(res === 'increased' ? 'Quantity updated in cart.' : `${p.name} — added to cart (size M).`);
+
+        // card-level add: pick the first available size (legacy products
+        // without size rows keep ordering as "M" while their stock lasts)
+        const snap = Array.isArray(p.sizes) && p.sizes.length ? p.sizes : null;
+        const firstAvail = snap
+          ? (snap.find((x) => (x.stock || 0) > 0) || {}).size || null
+          : ((Number(p.stock) || 0) > 0 ? 'M' : null);
+        if (!firstAvail) { T.toast(`${p.name} is out of stock.`); return; }
+
+        const res = T.cart.add(p, firstAvail, 1);
+        if (res === 'blocked') { T.toast(`Size ${firstAvail} is out of stock.`); return; }
+        if (res === 'clamped') {
+          const st = snap ? ((snap.find((x) => x.size === firstAvail) || {}).stock || 1) : 99;
+          T.toast(`Only ${st === 99 ? 'limited' : st} left in size ${firstAvail} — cart updated.`);
+        } else {
+          T.toast(`${p.name} — added to cart (size ${firstAvail}).`);
+        }
         bumpCartCount();
         // open the drawer for immediate feedback
         const drawer = qs('#cart-drawer');
@@ -580,26 +601,61 @@ window.TOF = window.TOF || {};
     }
     qs('#pdp-stock').textContent = p.stock > 0 ? 'In stock and ready to ship' : 'Out of stock';
 
-    // sizes + qty
-    let size = 'M';
-    qsa('#pdp-sizes .chip').forEach((chip) => {
-      chip.classList.toggle('is-on', chip.dataset.size === size);
-      chip.addEventListener('click', () => {
-        size = chip.dataset.size;
-        qsa('#pdp-sizes .chip').forEach((c) => c.classList.toggle('is-on', c === chip));
-        qs('#pdp-size-hint').textContent = 'Size ' + size + ' selected';
+    // sizes — the six canonical chips. Per-size rows (migration 0009) are
+    // authoritative when configured; a product without them keeps the legacy
+    // behavior where every size follows the product-level stock.
+    const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+    const sizeRows = Array.isArray(p.sizes) && p.sizes.length ? p.sizes : null;
+    const stockOf = (s) => sizeRows
+      ? ((sizeRows.find((x) => x.size === s) || {}).stock || 0)
+      : (Number(p.stock) || 0);
+    const chipsWrap = qs('#pdp-sizes');
+    chipsWrap.innerHTML = SIZE_ORDER.map((s) => {
+      const st = stockOf(s);
+      const out = st <= 0;
+      return `<button type="button" class="chip${out ? ' is-out' : ''}" data-size="${s}" aria-pressed="false"${out ? ' disabled title="Out of stock"' : ''}>${s}</button>`;
+    }).join('');
+
+    let size = (SIZE_ORDER.find((s) => stockOf(s) > 0)) || null;
+    const sizeHint = qs('#pdp-size-hint');
+
+    const paintSizes = () => {
+      qsa('#pdp-sizes .chip').forEach((c) => {
+        c.classList.toggle('is-on', c.dataset.size === size);
+        c.setAttribute('aria-pressed', String(c.dataset.size === size));
       });
+      if (!size) { sizeHint.textContent = 'Out of stock'; sizeHint.classList.remove('is-low'); return; }
+      const st = stockOf(size);
+      sizeHint.classList.toggle('is-low', st <= 5);
+      sizeHint.textContent = st <= 5 ? `Size ${size} — only ${st} left` : `Size ${size} selected`;
+    };
+    chipsWrap.addEventListener('click', (e) => {
+      const chip = e.target.closest('.chip');
+      if (!chip || chip.disabled) return;
+      size = chip.dataset.size;
+      paintSizes();
+      clampQty();
     });
 
+    // qty stepper clamps to the selected size's stock
     let qty = 1;
     const qtyEl = qs('#pdp-qty-val');
+    const qtyCap = () => Math.max(1, Math.min(size ? stockOf(size) : 1, 99));
+    const clampQty = () => { qty = Math.max(1, Math.min(qty, qtyCap())); };
     qs('#pdp-qty-dec').addEventListener('click', () => { qty = Math.max(1, qty - 1); qtyEl.textContent = qty; });
-    qs('#pdp-qty-inc').addEventListener('click', () => { qty = Math.min(9, qty + 1); qtyEl.textContent = qty; });
+    qs('#pdp-qty-inc').addEventListener('click', () => { qty = Math.min(qtyCap(), qty + 1); qtyEl.textContent = qty; });
+
+    paintSizes();
+    clampQty();
+    qtyEl.textContent = qty;
 
     qs('#pdp-add').addEventListener('click', () => {
-      T.cart.add(p, size, qty);
+      if (!size) { T.toast('This product is out of stock in every size.'); return; }
+      const res = T.cart.add(p, size, qty);
+      if (res === 'blocked') { T.toast(`Size ${size} is out of stock.`); return; }
+      if (res === 'clamped') T.toast(`Only ${stockOf(size)} left in size ${size} — cart updated.`);
+      else T.toast(`${p.name} × ${qty} — added to cart (size ${size}).`);
       bumpCartCount();
-      T.toast(`${p.name} × ${qty} — added to cart (size ${size}).`);
       const drawer = qs('#cart-drawer');
       if (drawer && !drawer.classList.contains('is-open')) qs('#cart-open')?.click();
     });

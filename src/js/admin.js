@@ -22,6 +22,7 @@ window.TOF = window.TOF || {};
     orders: [],          // enriched: { ...o, items, customer }
     messages: [],
     subs: [],
+    sizeRows: [],       // product_sizes rows (0009) — empty until migration runs
     prodFilter: '',
     orderFilter: '',
     activeTab: 'products',
@@ -281,7 +282,7 @@ window.TOF = window.TOF || {};
     const seq = ++loadAllSeq;
     const rows = (res) => { const m = dbMsg(res, 'Could not load data.'); if (m) T.toast(m); return res.data || []; };
 
-    const [prod, cats, orders, items, profiles, names, msgs, subs] = await Promise.all([
+    const [prod, cats, orders, items, profiles, names, msgs, subs, sizesRes] = await Promise.all([
       T.sb.from('products').select('*').order('created_at', { ascending: false }),
       T.sb.from('categories').select('*').order('created_at', { ascending: true }),
       T.sb.from('orders').select('*').order('created_at', { ascending: false }).limit(300),
@@ -290,6 +291,8 @@ window.TOF = window.TOF || {};
       T.sb.from('products').select('id, name'),
       T.sb.from('contact_messages').select('*').order('created_at', { ascending: false }).limit(300),
       T.sb.from('newsletter_subscribers').select('*').order('created_at', { ascending: false }).limit(2000),
+      /* optional 0009 table — quiet until the migration runs */
+      T.sb.from('product_sizes').select('*'),
     ]);
 
     if (seq !== loadAllSeq) return; // superseded
@@ -298,6 +301,7 @@ window.TOF = window.TOF || {};
     S.categories = rows(cats);
     S.messages = rows(msgs);
     S.subs = rows(subs);
+    S.sizeRows = sizesRes.error ? [] : (sizesRes.data || []);
 
     const profMap = {};
     rows(profiles).forEach((p) => { profMap[p.id] = p; });
@@ -491,7 +495,15 @@ window.TOF = window.TOF || {};
     fillCategoryOptions(document.getElementById('prod-cat'), p ? p.category_id : null);
     document.getElementById('prod-price').value = p ? num(p.price) : '';
     document.getElementById('prod-orig').value = p && p.original_price ? num(p.original_price) : '';
-    document.getElementById('prod-stock').value = p ? p.stock : '';
+    // per-size stock (0009): size rows when configured; a legacy product gets
+    // its global stock prefilled in M so the first save converts it losslessly
+    const szRows = p ? S.sizeRows.filter((r) => Number(r.product_id) === Number(p.id)) : [];
+    const szMap = new Map(szRows.map((r) => [r.size, Math.max(0, Number(r.stock) || 0)]));
+    document.querySelectorAll('#prod-sizes .sz-cell input').forEach((inp) => {
+      inp.value = szRows.length
+        ? (szMap.get(inp.dataset.sz) || 0)
+        : (inp.dataset.sz === 'M' ? Math.max(0, num(p && p.stock)) : 0);
+    });
     document.getElementById('prod-desc').value = p ? (p.description || '') : '';
     document.getElementById('prod-newflag').checked = p ? !!p.is_new : false;
     document.getElementById('prod-best').checked = p ? !!p.is_best_seller : false;
@@ -540,6 +552,12 @@ window.TOF = window.TOF || {};
       if (S.prodCover > 0) ordered.unshift(...ordered.splice(S.prodCover, 1));
       const images = ordered.map((ph) => ph.url);
 
+      // per-size stock (0009) — zero is allowed; an all-zero product simply
+      // shows as out of stock on the storefront
+      const sizeRows = Array.from(document.querySelectorAll('#prod-sizes .sz-cell input'))
+        .map((inp) => ({ size: inp.dataset.sz, stock: Math.max(0, Math.trunc(num(inp.value))) }));
+      const totalStock = sizeRows.reduce((s, r) => s + r.stock, 0);
+
       const originalRaw = document.getElementById('prod-orig').value;
       const payload = {
         name,
@@ -549,21 +567,36 @@ window.TOF = window.TOF || {};
         image_url: images[0] || '',
         images,
         category_id,
-        stock: Math.max(0, Math.trunc(num(document.getElementById('prod-stock').value))),
+        stock: totalStock,
         is_new: document.getElementById('prod-newflag').checked,
         is_best_seller: document.getElementById('prod-best').checked,
         is_active: document.getElementById('prod-active').checked,
       };
 
       const id = document.getElementById('prod-id').value;
+      let pid = id ? Number(id) : null;
       const res = id
-        ? await T.sb.from('products').update(payload).eq('id', Number(id))
-        : await T.sb.from('products').insert(payload);
+        ? await T.sb.from('products').update(payload).eq('id', pid)
+        : await T.sb.from('products').insert(payload).select('id');
 
       const m = dbMsg(res, 'Could not save the product.');
       if (m) { T.toast(m); throw new Error('db'); }
+      if (pid == null) {
+        const inserted = Array.isArray(res.data) ? res.data[0] : null;
+        pid = inserted ? Number(inserted.id) : null;
+      }
 
-      T.toast(id ? 'Product updated.' : 'Product added to the shop.');
+      // every size row is written; the DB trigger re-sums products.stock
+      if (pid != null) {
+        const up = await T.sb.from('product_sizes').upsert(
+          sizeRows.map((r) => ({ product_id: pid, size: r.size, stock: r.stock })),
+          { onConflict: 'product_id,size' });
+        const m2 = dbMsg(up, 'Product saved, but per-size stock could not be updated.');
+        if (m2) T.toast(m2);
+      }
+
+      const base = id ? 'Product updated.' : 'Product added to the shop.';
+      T.toast(totalStock === 0 ? `${base} All sizes are at 0 — it shows as out of stock.` : base);
       document.getElementById('prod-form').hidden = true;
       S.prodPhotos = [];
       S.prodCover = 0;
@@ -767,7 +800,7 @@ window.TOF = window.TOF || {};
         <ul class="order-items">
           ${o.items.length
             ? o.items.map((it) => `
-              <li><span>${it.quantity} × ${T.esc(it.name)}</span><span>${T.money(num(it.unit_price) * it.quantity)}</span></li>`).join('')
+              <li><span>${it.quantity} × ${T.esc(it.name)}${it.size ? ` <span class="oi-size">size ${T.esc(it.size)}</span>` : ''}</span><span>${T.money(num(it.unit_price) * it.quantity)}</span></li>`).join('')
             : '<li><span>No items</span><span>—</span></li>'}
         </ul>
         ${addrText(o.shipping_address) ? `<p class="oa-addr">📍 ${T.esc(addrText(o.shipping_address))}</p>` : ''}

@@ -9,8 +9,20 @@ window.TOF = window.TOF || {};
 (function catalog(T) {
   const ig = (p) => Number(p) || 0;
 
+  /* canonical size ladder for every product (0009) */
+  const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+
+  /** Collapse raw product_sizes rows into [{size, stock}] ordered XS→XXL.
+      Returns null when the product has no size rows (legacy: all sizes
+      follow the product-level stock). */
+  function normalizeSizes(rows) {
+    if (!Array.isArray(rows) || !rows.length) return null;
+    const bySize = new Map(rows.map((r) => [r.size, Number(r.stock) || 0]));
+    return SIZE_ORDER.map((s) => ({ size: s, stock: bySize.get(s) || 0 }));
+  }
+
   /** Map a live/demo DB row into the app shape. */
-  function normalize(row, catSlug, catName) {
+  function normalize(row, catSlug, catName, sizeRows) {
     if (!row) return null;
     const price = ig(row.price);
     const hasImage = typeof row.image_url === 'string' && row.image_url.length > 8;
@@ -27,6 +39,7 @@ window.TOF = window.TOF || {};
       categorySlug: catSlug || row.category_slug || '',
       categoryName: catName || row.category_name || '',
       stock: Number(row.stock) || 0,
+      sizes: normalizeSizes(sizeRows),
       isNew: !!row.is_new,
       isBestSeller: !!row.is_best_seller,
       createdAt: row.created_at || '',
@@ -55,15 +68,26 @@ window.TOF = window.TOF || {};
 
     if (T.mode === 'supabase') {
       /* --- live: separate selects then client-side join (robust) --- */
-      const [p, c] = await Promise.all([
+      const [p, c, sz] = await Promise.all([
         T.sb.from('products').select('*').eq('is_active', true).order('created_at', { ascending: false }),
         T.sb.from('categories').select('*').order('id'),
+        /* optional 0009 table — a failed read simply leaves every product in
+           legacy mode, where all sizes follow the product-level stock */
+        T.sb.from('product_sizes').select('*'),
       ]);
       if (!p.error && !c.error) {
         const catById = new Map((c.data || []).map((c) => [Number(c.id), c]));
+        const sizesByProduct = new Map();
+        if (!sz.error) {
+          (sz.data || []).forEach((r) => {
+            const pid = Number(r.product_id);
+            if (!sizesByProduct.has(pid)) sizesByProduct.set(pid, []);
+            sizesByProduct.get(pid).push(r);
+          });
+        }
         rows = (p.data || []).map((row) => {
           const cat = catById.get(Number(row.category_id));
-          return normalize(row, cat && cat.slug, cat && cat.name);
+          return normalize(row, cat && cat.slug, cat && cat.name, sizesByProduct.get(Number(row.id)));
         }).filter(Boolean);
         cats = (c.data || []).map((c) => ({
           id: Number(c.id), slug: c.slug, name: c.name,

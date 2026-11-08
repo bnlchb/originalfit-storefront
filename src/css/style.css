@@ -947,6 +947,18 @@ color: #fff;
 }
 .chip:hover { border-color: var(--ink); }
 .chip.is-on { background: var(--ink); border-color: var(--ink); color: var(--white); }
+/* unavailable size — greyed, struck-through, inert (0009 per-size stock) */
+.chip.is-out {
+  color: var(--muted-light);
+  background: var(--bg-alt);
+  border-style: dashed;
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  cursor: not-allowed;
+  opacity: .8;
+}
+.chip.is-out:hover { border-color: var(--line); pointer-events: none; }
+.chip:disabled { pointer-events: none; }
 .ci-qty {
   width: max-content;
   display: inline-flex;
@@ -1407,8 +1419,18 @@ body.lb-open { overflow: hidden; }
   justify-content: space-between;
 }
 .size-chips { display: flex; gap: .5rem; flex-wrap: wrap; }
-.size-chips .chip { min-width: 52px; height: 40px; font-size: .78rem; }
+.size-chips .chip {
+  min-width: 52px;
+  height: 40px;
+  font-size: .78rem;
+  border-radius: var(--radius-sm);
+  transition: border-color var(--ease) .2s, background var(--ease) .2s, color var(--ease) .2s, transform var(--ease) .2s;
+}
+.size-chips .chip:not(:disabled):hover { transform: translateY(-1.5px); }
 .size-chips .chip.is-on { background: var(--ink); color: var(--white); }
+.size-chips .chip.is-out { height: 40px; min-width: 52px; font-size: .78rem; }
+.size-hint { font-size: .72rem; color: var(--muted-light); }
+.size-hint.is-low { color: var(--ink); font-weight: 700; }
 .size-hint { font-size: .72rem; color: var(--muted-light); }
 
 .pdp-buy { display: flex; gap: .8rem; margin-top: 1.6rem; }
@@ -1733,6 +1755,18 @@ body.lb-open { overflow: hidden; }
 }
 .status-pill.pending { background: var(--black); color: var(--white); border-color: var(--black); }
 .order-items { font-size: .88rem; color: var(--muted); }
+.oi-size {
+  font-size: .62rem;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: var(--bg-alt);
+  border-radius: var(--radius-pill, 999px);
+  padding: .18em .55em;
+  margin-left: .45em;
+  white-space: nowrap;
+}
 .order-items li { display: flex; justify-content: space-between; gap: 1rem; padding: .3rem 0; }
 .order-empty-note { margin: .2rem 0; font-size: .84rem; color: var(--muted); letter-spacing: .01em; }
 .order-total { display: flex; justify-content: space-between; border-top: 1px solid var(--line); padding-top: .7rem; font-weight: 800; }

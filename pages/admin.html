@@ -174,9 +174,16 @@
                   <label for="prod-orig">Sale price — original ($)</label>
                   <input id="prod-orig" type="number" min="0" step="0.01" placeholder="29.99 (optional)">
                 </div>
-                <div class="field">
-                  <label for="prod-stock">Stock</label>
-                  <input id="prod-stock" type="number" min="0" step="1" placeholder="42" required>
+                <div class="field field-wide">
+                  <label>Stock — per size · site totals update automatically</label>
+                  <div class="sz-grid" id="prod-sizes">
+                    <label class="sz-cell"><span>XS</span><input type="number" min="0" step="1" data-sz="XS" placeholder="0" inputmode="numeric"></label>
+                    <label class="sz-cell"><span>S</span><input type="number" min="0" step="1" data-sz="S" placeholder="0" inputmode="numeric"></label>
+                    <label class="sz-cell"><span>M</span><input type="number" min="0" step="1" data-sz="M" placeholder="0" inputmode="numeric"></label>
+                    <label class="sz-cell"><span>L</span><input type="number" min="0" step="1" data-sz="L" placeholder="0" inputmode="numeric"></label>
+                    <label class="sz-cell"><span>XL</span><input type="number" min="0" step="1" data-sz="XL" placeholder="0" inputmode="numeric"></label>
+                    <label class="sz-cell"><span>XXL</span><input type="number" min="0" step="1" data-sz="XXL" placeholder="0" inputmode="numeric"></label>
+                  </div>
                 </div>
                 <div class="field field-wide">
                   <label>Product photos — up to 10 · drag &amp; drop supported · the first photo is the cover</label>
