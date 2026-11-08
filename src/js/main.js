@@ -620,7 +620,6 @@ window.TOF = window.TOF || {};
         c.classList.toggle('is-on', c.dataset.size === size);
         c.setAttribute('aria-pressed', String(c.dataset.size === size));
       });
-      sizeHint.classList.remove('is-low');
       sizeHint.textContent = size ? `Size ${size} selected` : 'Out of stock';
     };
     chipsWrap.addEventListener('click', (e) => {
