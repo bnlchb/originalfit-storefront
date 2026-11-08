@@ -108,8 +108,13 @@
     <section class="section tight" style="padding-top:0">
       <div class="container">
 
-        <!-- product details -->
-        <div class="pdp-grid" id="pdp-root">
+        <!-- product details — title header first, then image | info side by side -->
+        <div id="pdp-root">
+          <header class="pdp-head reveal">
+            <p class="pdp-cat" id="pdp-cat">—</p>
+            <h2 class="pdp-title" id="pdp-title">—</h2>
+          </header>
+          <div class="pdp-grid">
           <div class="pdp-col-media">
             <div class="pdp-media reveal" id="pdp-media">
               <img id="pdp-img" src="" alt="Product image" loading="eager" draggable="false">
@@ -122,8 +127,6 @@
           </div>
 
           <div class="pdp-sticky reveal" style="--d:90ms">
-            <p class="pdp-cat" id="pdp-cat">—</p>
-            <h2 class="pdp-title" id="pdp-title">—</h2>
             <div class="pdp-price">
               <span class="now" id="pdp-price-now">0.00 DH</span>
               <span class="was" id="pdp-price-was" hidden><s>0.00 DH</s></span>
@@ -182,7 +185,8 @@
               </details>
             </div>
           </div>
-        </div>
+          </div>
+          </div>
 
         <!-- not found -->
         <div class="not-found" id="pdp-not-found" hidden>

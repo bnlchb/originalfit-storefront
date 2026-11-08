@@ -1222,6 +1222,12 @@ color: #fff;
 .breadcrumb .sep { opacity: .45; }
 .breadcrumb .current { color: var(--ink); font-weight: 700; }
 
+/* product header — category + title sit above the media/info grid so the
+   image starts directly below the title, its top line exactly aligned with
+   the information column on desktop and first on mobile */
+.pdp-head { margin-bottom: clamp(1.1rem, 2.2vw, 1.7rem); }
+.pdp-head .pdp-title { margin-top: .45rem; }
+
 /* ------------------------------------------------------------ product page -- */
 .pdp-grid {
   display: grid;
