@@ -472,39 +472,88 @@ window.TOF = window.TOF || {};
       }
     };
     if (multi) {
+      // thumbnail strip below the media + 1/N counter + page arrows revealed
       countEl.hidden = false;
       qs('#pdp-prev').hidden = false;
       qs('#pdp-next').hidden = false;
       thumbs.hidden = false;
       thumbs.innerHTML = gallery.map((u, k) =>
-        `<button class="pdpt${k === 0 ? ' is-on' : ''}" type="button" aria-label="Photo ${k + 1}"><img src="${u}" alt="" loading="lazy"></button>`).join('');
+        `<button class="pdpt${k === 0 ? ' is-on' : ''}" type="button" aria-label="Photo ${k + 1}" draggable="false"><img src="${u}" alt="" loading="lazy" draggable="false"></button>`).join('');
       thumbs.addEventListener('click', (e) => {
         const b = e.target.closest('.pdpt');
         if (b) paint(qsa('#pdp-thumbs .pdpt').indexOf(b));
       });
       qs('#pdp-prev').addEventListener('click', () => paint(gi - 1));
       qs('#pdp-next').addEventListener('click', () => paint(gi + 1));
-
-      // touch/drag swipe on the media box
-      media.classList.add('has-multi');
-      let sx = 0, sy = 0, down = false;
-      media.addEventListener('pointerdown', (e) => { down = true; sx = e.clientX; sy = e.clientY; });
-      media.addEventListener('pointerup', (e) => {
-        if (!down) return;
-        down = false;
-        const dx = e.clientX - sx, dy = e.clientY - sy;
-        if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy)) paint(dx < 0 ? gi + 1 : gi - 1);
-      });
-      media.addEventListener('pointercancel', () => { down = false; });
-
-      // keyboard nav on the product page only
-      document.addEventListener('keydown', (e) => {
-        if (!/^(input|textarea|select)$/i.test((e.target || {}).tagName || '') && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
-          paint(e.key === 'ArrowRight' ? gi + 1 : gi - 1);
-        }
-      });
     }
-    qs('#pdp-img').classList.add('is-swap');
+
+    if (multi) { media.classList.add('has-multi'); }
+
+    // fullscreen viewer (brand-consistent): click any photo → large, clear view
+    const lb = qs('#pdp-lb');
+    const lbImg = qs('#pdp-lb-img');
+    const lbCount = qs('#pdp-lb-count');
+    const lbClose = qs('#pdp-lb-close');
+    const lbPrev = qs('#pdp-lb-prev');
+    const lbNext = qs('#pdp-lb-next');
+
+    const lbSync = () => {
+      lbImg.src = gallery[gi];
+      lbImg.alt = p.name + ' — photo ' + (gi + 1) + ' of ' + gallery.length + ' (large view)';
+      lbCount.hidden = !multi;
+      lbCount.textContent = (gi + 1) + ' / ' + gallery.length;
+      lbPrev.hidden = !multi;
+      lbNext.hidden = !multi;
+    };
+    const openLB = () => {
+      if (!lb.hidden) return;
+      document.body.classList.add('lb-open');
+      lb.hidden = false;
+      lbSync();
+    };
+    const closeLB = () => {
+      if (lb.hidden) return;
+      document.body.classList.remove('lb-open');
+      lb.hidden = true;
+    };
+
+    lbClose.addEventListener('click', closeLB);
+    lbPrev.addEventListener('click', () => { paint(gi - 1); lbSync(); });
+    lbNext.addEventListener('click', () => { paint(gi + 1); lbSync(); });
+    // backdrop click closes (clicks on the photo, arrows and counter don't)
+    lb.addEventListener('click', (e) => {
+      if (!e.target.closest('.lb-img, .lb-arrow, .lb-close, .lb-count')) closeLB();
+    });
+
+    // click the main image (or tap, not drag) → fullscreen; swipe threshold
+    // keeps arrows' thumb-vs-photo interactions distinct
+    let sx = 0, sy = 0, down = false, downOnImg = false;
+    media.addEventListener('pointerdown', (e) => {
+      down = true;
+      downOnImg = !!(e.target && e.target.id === 'pdp-img');
+      sx = e.clientX; sy = e.clientY;
+    });
+    media.addEventListener('pointerup', (e) => {
+      if (!down) return;
+      down = false;
+      const dx = e.clientX - sx, dy = e.clientY - sy;
+      if (multi && Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy)) {
+        paint(dx < 0 ? gi + 1 : gi - 1);
+        return;
+      }
+      if (downOnImg && Math.abs(dx) < 8 && Math.abs(dy) < 8) openLB();
+    });
+    media.addEventListener('pointercancel', () => { down = false; });
+
+    // keyboard: ←/→ browse photos (in viewer and out), Escape closes the viewer
+    document.addEventListener('keydown', (e) => {
+      const typing = /^(input|textarea|select)$/i.test((e.target || {}).tagName || '');
+      if (typing) return;
+      if (e.key === 'Escape') { closeLB(); return; }
+      if (e.key === 'ArrowLeft') { paint(gi - 1); lbSync(); return; }
+      if (e.key === 'ArrowRight') { paint(gi + 1); lbSync(); }
+    });
+
     paint(0);
     const badgeEl = qs('#pdp-badge');
     const b = T.products.badgeOf(p);

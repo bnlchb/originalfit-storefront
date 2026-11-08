@@ -110,14 +110,16 @@
 
         <!-- product details -->
         <div class="pdp-grid" id="pdp-root">
-          <div class="pdp-media reveal" id="pdp-media">
-            <img id="pdp-img" src="" alt="Product image" loading="eager">
-            <span class="badge" id="pdp-badge" hidden></span>
-            <p class="g-count" id="pdp-count" hidden></p>
-            <button class="g-arrow is-prev" id="pdp-prev" type="button" aria-label="Previous photo" hidden>←</button>
-            <button class="g-arrow is-next" id="pdp-next" type="button" aria-label="Next photo" hidden>→</button>
+          <div class="pdp-col-media">
+            <div class="pdp-media reveal" id="pdp-media">
+              <img id="pdp-img" src="" alt="Product image" loading="eager" draggable="false">
+              <span class="badge" id="pdp-badge" hidden></span>
+              <p class="g-count" id="pdp-count" hidden></p>
+              <button class="g-arrow is-prev" id="pdp-prev" type="button" aria-label="Previous photo" hidden>←</button>
+              <button class="g-arrow is-next" id="pdp-next" type="button" aria-label="Next photo" hidden>→</button>
+            </div>
+            <div class="pdp-thumbs" id="pdp-thumbs" hidden></div>
           </div>
-          <div class="pdp-thumbs" id="pdp-thumbs" hidden></div>
 
           <div class="pdp-sticky reveal" style="--d:90ms">
             <p class="pdp-cat" id="pdp-cat">—</p>
@@ -208,6 +210,15 @@
 
       </div>
     </section>
+
+    <!-- fullscreen product photo viewer (opens on main-image click) -->
+    <div class="pdp-lightbox" id="pdp-lb" role="dialog" aria-modal="true" aria-label="Product photo viewer" hidden>
+      <img class="lb-img" id="pdp-lb-img" src="" alt="" draggable="false">
+      <p class="lb-count" id="pdp-lb-count" hidden></p>
+      <button class="lb-close" id="pdp-lb-close" type="button" aria-label="Close viewer">×</button>
+      <button class="lb-arrow is-prev" id="pdp-lb-prev" type="button" aria-label="Previous photo" hidden>←</button>
+      <button class="lb-arrow is-next" id="pdp-lb-next" type="button" aria-label="Next photo" hidden>→</button>
+    </div>
 
   </main>
 
