@@ -531,11 +531,13 @@ body.solid-header .site-header { background: rgba(255, 255, 255, .92); backdrop-
 .product-grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 
 .product-card { position: relative; }
+/* uniform product frame — white fill, hairline border, 6px radius, contain */
 .p-media {
   position: relative;
-  border-radius: var(--radius-md);
+  border-radius: 6px;
   overflow: hidden;
-  background: var(--grey-product);
+  background: #FFFFFF;
+  border: 1px solid var(--line);
   aspect-ratio: 4 / 5;
   isolation: isolate;
 }
@@ -543,10 +545,10 @@ body.solid-header .site-header { background: rgba(255, 255, 255, .92); backdrop-
 .p-media img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  transition: transform .8s var(--ease);
+  object-fit: contain;          /* whole garment visible — never cropped */
+  object-position: center;
+  display: block;
 }
-.product-card:hover .p-media img { transform: scale(1.06); }
 
 .badge {
   position: absolute;
@@ -917,9 +919,11 @@ color: #fff;
 .cart-item img {
   width: 76px;
   aspect-ratio: 4 / 5;
-  object-fit: cover;
-  border-radius: var(--radius-sm);
-  background: var(--grey-product);
+  object-fit: contain;
+  object-position: center;
+  border-radius: 6px;
+  background: #FFFFFF;
+  border: 1px solid var(--line);
 }
 .ci-info {
   min-width: 0; /* keep long product names from blowing out the 1fr column */
@@ -1055,7 +1059,7 @@ color: #fff;
   transition: background var(--ease) .2s;
 }
 .search-item:hover { background: #efefec; }
-.search-item img { width: 58px; aspect-ratio: 4/5; object-fit: cover; border-radius: 7px; background: var(--grey-product); }
+.search-item img { width: 58px; aspect-ratio: 4/5; object-fit: contain; object-position: center; border-radius: 6px; background: #FFFFFF; border: 1px solid var(--line); }
 .si-name { font-size: .9rem; font-weight: 700; text-transform: uppercase; }
 .si-cat { font-size: .68rem; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); margin-top: .2rem; }
 .si-price { font-weight: 800; font-size: .9rem; }
@@ -1207,7 +1211,7 @@ color: #fff;
 }
 .pdp-media {
   position: relative;
-  border-radius: var(--radius-lg);
+  border-radius: 8px;
   overflow: hidden;
   background: #FFFFFF;            /* pure white behind every product photo */
   border: 1px solid var(--line);
@@ -1305,7 +1309,7 @@ color: #fff;
   height: 4rem;
   padding: 0;
   border: 1.5px solid var(--line);
-  border-radius: var(--radius-sm);
+  border-radius: 6px;
   overflow: hidden;
   background: #FFFFFF;
   cursor: pointer;
