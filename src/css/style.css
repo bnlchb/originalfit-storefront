@@ -463,44 +463,7 @@ body.solid-header .site-header { background: rgba(255, 255, 255, .92); backdrop-
   color: var(--muted);
   line-height: 1.65;
 }
-.hero-cta-row {
-  margin-top: 1.6rem;
-  display: flex;
-  align-items: center;
-  gap: 1.2rem;
-  flex-wrap: wrap;
-}
-.hero-cta { margin-top: 0; }
-
-/* "(Scroll Down)" beside the hero CTA — same design as .hero-scroll, gray */
-.hero-scroll-inline {
-  display: inline-flex;
-  align-items: center;
-  font-size: .66rem;
-  font-weight: 600;
-  letter-spacing: .3em;
-  text-transform: uppercase;
-  color: var(--muted);
-  transition: color var(--ease) .2s;
-}
-.hero-scroll-inline:hover { color: var(--ink); }
-
-.hero-scroll {
-  position: absolute;
-  left: max(1.5rem, (100vw - var(--wrap)) / 2);
-  bottom: 1.6rem;
-  z-index: 3;
-  display: inline-flex;
-  align-items: center;
-  gap: .7em;
-  font-size: .66rem;
-  font-weight: 600;
-  letter-spacing: .3em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-.hero-scroll .arrow { display: inline-block; animation: cue 1.8s ease-in-out infinite; }
-.hero-scroll:hover { color: var(--ink); }
+.hero-cta { margin-top: 1.6rem; }
 
 .hero-rail {
   position: absolute;

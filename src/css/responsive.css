@@ -86,7 +86,6 @@ html, body { overflow-x: clip; }
   .hero-title { font-size: clamp(2.9rem, 14.5vw, 4rem); }
   .hero-subtitle { letter-spacing: .34em; }
   .hero-lead { font-size: .93rem; }
-  .hero-scroll { display: none; }
   .hero-rail { right: .9rem; }
   .hero-dot { height: 20px; }
   .hero-dot.is-active { height: 32px; }
