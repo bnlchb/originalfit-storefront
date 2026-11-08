@@ -252,12 +252,12 @@
   aspect-ratio: 1;
   overflow: hidden;
   border-radius: var(--radius-sm);
-  background: var(--grey-product);
-  border: 1.5px solid transparent;
+  background: #FFFFFF;
+  border: 1.5px solid var(--line);
   transition: border-color var(--ease) .2s;
 }
 .gal-thumb.is-cover { border-color: var(--ink); }
-.gal-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.gal-thumb img { width: 100%; height: 100%; object-fit: contain; display: block; }
 
 .gal-cov {
   position: absolute;
