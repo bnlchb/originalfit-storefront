@@ -1428,9 +1428,7 @@ body.lb-open { overflow: hidden; }
 }
 .size-chips .chip:not(:disabled):hover { transform: translateY(-1.5px); }
 .size-chips .chip.is-on { background: var(--ink); color: var(--white); }
-.size-chips .chip.is-out { height: 40px; min-width: 52px; font-size: .78rem; }
 .size-hint { font-size: .72rem; color: var(--muted-light); }
-.size-hint.is-low { color: var(--ink); font-weight: 700; }
 .size-hint { font-size: .72rem; color: var(--muted-light); }
 
 .pdp-buy { display: flex; gap: .8rem; margin-top: 1.6rem; }

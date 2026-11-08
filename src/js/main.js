@@ -249,12 +249,8 @@ window.TOF = window.TOF || {};
 
         const res = T.cart.add(p, firstAvail, 1);
         if (res === 'blocked') { T.toast(`Size ${firstAvail} is out of stock.`); return; }
-        if (res === 'clamped') {
-          const st = snap ? ((snap.find((x) => x.size === firstAvail) || {}).stock || 1) : 99;
-          T.toast(`Only ${st === 99 ? 'limited' : st} left in size ${firstAvail} — cart updated.`);
-        } else {
-          T.toast(`${p.name} — added to cart (size ${firstAvail}).`);
-        }
+        if (res === 'clamped') T.toast('Limited stock — cart updated to what is available.');
+        else T.toast(`${p.name} — added to cart (size ${firstAvail}).`);
         bumpCartCount();
         // open the drawer for immediate feedback
         const drawer = qs('#cart-drawer');
@@ -624,10 +620,8 @@ window.TOF = window.TOF || {};
         c.classList.toggle('is-on', c.dataset.size === size);
         c.setAttribute('aria-pressed', String(c.dataset.size === size));
       });
-      if (!size) { sizeHint.textContent = 'Out of stock'; sizeHint.classList.remove('is-low'); return; }
-      const st = stockOf(size);
-      sizeHint.classList.toggle('is-low', st <= 5);
-      sizeHint.textContent = st <= 5 ? `Size ${size} — only ${st} left` : `Size ${size} selected`;
+      sizeHint.classList.remove('is-low');
+      sizeHint.textContent = size ? `Size ${size} selected` : 'Out of stock';
     };
     chipsWrap.addEventListener('click', (e) => {
       const chip = e.target.closest('.chip');
@@ -653,7 +647,7 @@ window.TOF = window.TOF || {};
       if (!size) { T.toast('This product is out of stock in every size.'); return; }
       const res = T.cart.add(p, size, qty);
       if (res === 'blocked') { T.toast(`Size ${size} is out of stock.`); return; }
-      if (res === 'clamped') T.toast(`Only ${stockOf(size)} left in size ${size} — cart updated.`);
+      if (res === 'clamped') T.toast('Limited stock — cart updated to what is available.');
       else T.toast(`${p.name} × ${qty} — added to cart (size ${size}).`);
       bumpCartCount();
       const drawer = qs('#cart-drawer');
