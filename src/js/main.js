@@ -476,16 +476,35 @@ window.TOF = window.TOF || {};
     const multi = gallery.length > 1;
     let gi = 0;
 
+    /* Painter: crossfade the big photo (fade out → swap src → fade in when the
+       new frame is decoded), keep the 1/N counter + thumb highlight in sync,
+       and prefetch the neighbours so arrow/swipe navigation feels instant. */
+    const paintMeta = () => {
+      if (!multi) return;
+      countEl.textContent = (gi + 1) + ' / ' + gallery.length;
+      qsa('#pdp-thumbs .pdpt').forEach((t, k) => t.classList.toggle('is-on', k === gi));
+    };
     const paint = (i) => {
       gi = i < 0 ? gallery.length - 1 : (i >= gallery.length ? 0 : i); // wrap-around
       const el = qs('#pdp-img');
+      const next = gallery[gi];
+      paintMeta();
+      if (el.getAttribute('src') === next) return; // same frame — nothing to fade
       el.classList.add('is-swap');
-      el.src = gallery[gi];
+      el.src = next;
       el.alt = p.name + ' — photo ' + (gi + 1) + ' of ' + gallery.length + (p.categoryName ? ` — ${p.categoryName}` : '');
-      if (multi) {
-        countEl.hidden = false;
-        countEl.textContent = (gi + 1) + ' / ' + gallery.length;
-        qsa('#pdp-thumbs .pdpt').forEach((t, k) => t.classList.toggle('is-on', k === gi));
+      const swapIn = () => requestAnimationFrame(() => el.classList.remove('is-swap'));
+      if (el.complete) swapIn();                                  // cached — soft fade-in
+      else {
+        el.addEventListener('load', swapIn, { once: true });      // network — fade in when decoded
+        el.addEventListener('error', swapIn, { once: true });     // a dead URL must never leave the frame faded
+      }
+      if (multi) { // prefetch both neighbours
+        [gi + 1, gi - 1].forEach((n) => {
+          const im = new Image();
+          im.decoding = 'async';
+          im.src = gallery[(n + gallery.length) % gallery.length];
+        });
       }
     };
     if (multi) {
@@ -537,6 +556,16 @@ window.TOF = window.TOF || {};
     lbClose.addEventListener('click', closeLB);
     lbPrev.addEventListener('click', () => { paint(gi - 1); lbSync(); });
     lbNext.addEventListener('click', () => { paint(gi + 1); lbSync(); });
+    // swipe navigation inside the fullscreen viewer (mobile)
+    let lbx = 0, lbSwiping = false;
+    lbImg.addEventListener('pointerdown', (e) => { lbSwiping = true; lbx = e.clientX; });
+    lbImg.addEventListener('pointerup', (e) => {
+      if (!lbSwiping) return;
+      lbSwiping = false;
+      const dx = e.clientX - lbx;
+      if (multi && Math.abs(dx) > 48) { paint(dx < 0 ? gi + 1 : gi - 1); lbSync(); }
+    });
+    lbImg.addEventListener('pointercancel', () => { lbSwiping = false; });
     // backdrop click closes (clicks on the photo, arrows and counter don't)
     lb.addEventListener('click', (e) => {
       if (!e.target.closest('.lb-img, .lb-arrow, .lb-close, .lb-count')) closeLB();

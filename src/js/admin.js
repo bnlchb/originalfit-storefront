@@ -414,6 +414,8 @@ window.TOF = window.TOF || {};
     document.getElementById('prod-gallery').addEventListener('click', (e) => {
       const rm = e.target.closest('[data-rm]');
       if (rm) { removePhoto(Number(rm.dataset.rm)); return; }
+      const mv = e.target.closest('[data-mv]');
+      if (mv) { movePhoto(Number(mv.dataset.mv), Number(mv.dataset.dir)); return; }
       const cov = e.target.closest('[data-cov]');
       if (cov) { setCover(Number(cov.dataset.cov)); }
     });
@@ -462,6 +464,20 @@ window.TOF = window.TOF || {};
 
   function setCover(i) { S.prodCover = i; paintGallery(); T.toast('Main photo updated.'); }
 
+  /* reorder: swap the photo at i with its neighbour; the main-photo choice
+     follows the photo it was set on, and the cover stays index 0 at save */
+  function movePhoto(i, dir) {
+    const j = i + dir;
+    if (j < 0 || j >= S.prodPhotos.length) return;
+    const arr = S.prodPhotos;
+    const tmp = arr[i];
+    arr[i] = arr[j];
+    arr[j] = tmp;
+    if (S.prodCover === i) S.prodCover = j;
+    else if (S.prodCover === j) S.prodCover = i;
+    paintGallery();
+  }
+
   function bucketPathOf(url) {
     try { const u = new URL(url); return u.pathname.split('/storage/v1/object/public/product-images/')[1] || null; }
     catch { return null; }
@@ -479,10 +495,14 @@ window.TOF = window.TOF || {};
     grid.hidden = false;
     grid.innerHTML = S.prodPhotos.map((ph, i) => `
       <div class="gal-thumb${i === S.prodCover ? ' is-cover' : ''}">
-        <img src="${ph.url}" alt="${T.esc(ph.name || 'Product photo ' + (i + 1))}" loading="lazy">
+        <img src="${ph.url}" alt="${T.esc(ph.name || 'Product photo ' + (i + 1))}" loading="lazy" draggable="false">
         ${i === S.prodCover ? '<span class="gal-cov">Cover</span>' : ''}
         <button class="gal-x" type="button" data-rm="${i}" aria-label="Remove photo ${i + 1}" title="Remove">×</button>
-        <button class="gal-cov-btn" type="button" data-cov="${i}" ${i === S.prodCover ? 'hidden' : ''}>Set as main</button>
+        <div class="gal-foot">
+          <button class="gal-mv" type="button" data-mv="${i}" data-dir="-1" ${i === 0 ? 'hidden' : ''} aria-label="Move photo ${i + 1} left" title="Move left">←</button>
+          <button class="gal-mv" type="button" data-mv="${i}" data-dir="1" ${i === S.prodPhotos.length - 1 ? 'hidden' : ''} aria-label="Move photo ${i + 1} right" title="Move right">→</button>
+          <button class="gal-cov-btn" type="button" data-cov="${i}" ${i === S.prodCover ? 'hidden' : ''} title="Make this the cover photo">Main</button>
+        </div>
       </div>`).join('');
   }
 

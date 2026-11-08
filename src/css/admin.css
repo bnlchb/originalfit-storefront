@@ -287,20 +287,31 @@
   transition: background var(--ease) .2s;
 }
 .gal-x:hover { background: var(--black); }
-.gal-cov-btn {
+.gal-foot {
   position: absolute;
   left: 0; right: 0; bottom: 0;
+  display: flex;
+  background: rgba(255, 255, 255, .86);
+}
+.gal-foot button {
   border: 0;
-  padding: .28rem 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: .7rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background var(--ease) .15s;
+}
+.gal-foot button:hover { background: var(--white); }
+.gal-mv { flex: 1 1 26%; padding: .3rem 0; }
+.gal-mv[hidden] { display: none; }
+.gal-cov-btn {
+  flex: 1 1 48%;
+  padding: .3rem 0;
   font-size: .55rem;
   letter-spacing: .14em;
   text-transform: uppercase;
-  color: var(--ink);
-  background: rgba(255, 255, 255, .86);
-  cursor: pointer;
-  transition: background var(--ease) .2s;
 }
-.gal-cov-btn:hover { background: var(--white); }
 
 .checks-row { display: flex; gap: 1.4rem; flex-wrap: wrap; margin: .3rem 0 .4rem; }
 
