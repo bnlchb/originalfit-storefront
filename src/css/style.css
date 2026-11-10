@@ -607,6 +607,22 @@ body.solid-header .site-header { background: rgba(255, 255, 255, .92); backdrop-
   min-height: 0;
 }
 
+/* premium card zoom: on hover-capable devices the PHOTO alone settles into a
+   subtle 1.08x scale inside its frame — the frame's overflow clip keeps every
+   pixel contained, the badge and card text never move, and the transform
+   origin is the image center so it zooms where you're looking. Touch devices
+   skip the block entirely: no hover, no tap-and-stick zoom artifacts. */
+@media (hover: hover) and (pointer: fine) {
+  .p-media img {
+    transition: transform .45s var(--ease);
+    transform: scale(1);
+  }
+  .product-card:hover .p-media img,
+  .product-card:focus-within .p-media img {
+    transform: scale(1.08);
+  }
+}
+
 .badge {
   position: absolute;
   top: 12px;
