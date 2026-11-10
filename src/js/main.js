@@ -607,7 +607,9 @@ window.TOF = window.TOF || {};
 
     qs('#pdp-cat').textContent = p.categoryName || 'T-Shirts';
     qs('#pdp-title').textContent = p.name;
-    qs('#pdp-desc').textContent = p.description || 'The THE ORIGINAL FIT staple — premium quality, timeless design.';
+    qs('#pdp-desc').innerHTML = T.products.descHTML(
+      p.description || 'The THE ORIGINAL FIT staple — premium quality, timeless design.'
+    );
     qs('#pdp-bc-current').textContent = p.name;
     const bcCat = qs('#pdp-bc-cat');
     bcCat.textContent = p.categoryName;

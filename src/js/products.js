@@ -10,6 +10,34 @@ window.TOF = window.TOF || {};
   const ig = (p) => Number(p) || 0;
 
   /* canonical size ladder for every product (0009) */
+  /** Description renderer — admin-entered text becomes clean structured
+      blocks instead of one merged paragraph:
+      · every line stands on its own (<p> rows)
+      · lines starting with -, * or • group into a styled <ul>
+      · blank lines render as consistent paragraph breaks, exactly as typed
+      Everything is escaped first so admin text can never inject HTML. */
+  function descHTML(desc) {
+    const lines = String(desc || '').split(/\r\n|\r|\n/).map((l) => l.trim());
+    while (lines.length && !lines[0]) lines.shift();          // trim leading blanks
+    while (lines.length && !lines[lines.length - 1]) lines.pop(); // trim trailing blanks
+    const out = [];
+    let list = null;
+    const flush = () => { if (list) { out.push(`<ul>${list.join('')}</ul>`); list = null; } };
+    for (const line of lines) {
+      if (!line) { flush(); out.push('<div class="desc-sp"></div>'); continue; }
+      const m = line.match(/^[-*\u2022\u25cf\u26ab\u25cb\u25e6\u25aa\u00b7\u2023\u2043]\s*(.+)$/);
+      if (m) {
+        list = list || [];
+        list.push(`<li>${T.esc(m[1])}</li>`);
+      } else {
+        flush();
+        out.push(`<p>${T.esc(line)}</p>`);
+      }
+    }
+    flush();
+    return out.join('');
+  }
+
   const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
   /** Collapse raw product_sizes rows into [{size, stock}] ordered XS→XXL.
@@ -212,5 +240,5 @@ window.TOF = window.TOF || {};
       </div>`).join('');
   }
 
-  T.products = { loadOnce, list, get, categories, search, cardHTML, renderCards, skeletonCards, badgeOf, normalize };
+  T.products = { loadOnce, list, get, categories, search, cardHTML, renderCards, skeletonCards, badgeOf, normalize, descHTML };
 })(window.TOF);
