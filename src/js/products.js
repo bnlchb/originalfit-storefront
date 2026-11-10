@@ -177,7 +177,7 @@ window.TOF = window.TOF || {};
       <article class="product-card">
         <div class="p-media">
           <a href="${productUrl}" aria-label="View ${T.esc(p.name)}">
-            <img src="${p.imageUrl}" alt="${T.esc(p.name)} — ${T.esc(p.categoryName) || 'THE ORIGINAL FIT'}" loading="lazy">
+            <img src="${p.imageUrl}" alt="${T.esc(p.name)} — ${T.esc(p.categoryName) || 'THE ORIGINAL FIT'}" loading="lazy" decoding="async">
             ${b ? `<span class="badge ${b.cls} no-anim">${b.label}</span>` : ''}
           </a>
           <button class="wish-btn${wished ? ' is-active' : ''}" type="button" data-wish="${p.id}"

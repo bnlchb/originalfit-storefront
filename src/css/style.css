@@ -81,6 +81,10 @@ h1, h2, h3, h4 {
 
 p { margin: 0; }
 a { color: inherit; text-decoration: none; }
+html { -webkit-tap-highlight-color: transparent; }
+/* on touch devices the first tap is a tap: no double-tap zoom delay on the
+   interactive controls — pan and pinch stay untouched */
+button, a, .chip, .icon-btn { touch-action: manipulation; }
 button {
   font-family: inherit;
   color: inherit;
@@ -1134,6 +1138,7 @@ color: #fff;
   transition: transform .45s var(--ease-io);
   visibility: hidden;
   overflow-y: auto;
+  overscroll-behavior: contain;   /* drawer scroll never chains to the page behind */
 }
 .mobile-menu.is-open { transform: none; visibility: visible; }
 .mm-link {

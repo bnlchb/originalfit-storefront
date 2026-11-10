@@ -87,7 +87,7 @@ html, body { overflow-x: clip; }
     justify-content: flex-end;
     padding-bottom: 4.6rem;
   }
-  .hero-title { font-size: clamp(2.9rem, 14.5vw, 4rem); }
+  .hero-title { font-size: clamp(2.75rem, 12.5vw, 3.6rem); } /* sized so the unbreakable "ORIGINAL FIT" line never clips its right edge on any phone width */
   .hero-subtitle { letter-spacing: .34em; }
   .hero-lead { font-size: .93rem; }
   .hero-rail { right: .9rem; }
@@ -151,6 +151,8 @@ html, body { overflow-x: clip; }
   .cart-item { grid-template-columns: 64px 1fr; }
   .cart-list .cart-item img { width: 64px; }
   .ci-side { grid-column: 2; flex-direction: row; align-items: center; padding-top: .2rem; }
+  /* quantity steppers get full touch targets on a phone */
+  .ci-qty button { width: 40px; height: 40px; font-size: 1.02rem; }
 
   .pdp-buy { flex-direction: column; }
   .pdp-wish { width: 100%; padding: 12px 0; }
