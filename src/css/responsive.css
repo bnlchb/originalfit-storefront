@@ -45,6 +45,10 @@ html, body { overflow-x: clip; }
   .pdp-grid { grid-template-columns: 1fr; }
   .pdp-sticky { position: static; }
 
+  /* drawer clears the home-indicator / notch safe area so its bottom
+     buttons are never flush with the system edge */
+  .mobile-menu { padding-bottom: calc(2.4rem + env(safe-area-inset-bottom, 0px)); }
+
   .cart-page-grid { grid-template-columns: 1fr; }
   .summary-card { position: static; }
 
@@ -91,13 +95,38 @@ html, body { overflow-x: clip; }
   .hero-dot.is-active { height: 32px; }
   .hero-est { font-size: .56rem; }
 
+  /* single-slide logo hero: the emblem floats in the clear upper zone,
+     horizontally centered, above the bottom-anchored text block */
+  .hero-slide.hero-logo {
+    left: 0;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: calc(var(--nav-h) + 7vh);
+    pointer-events: none;
+  }
+  .hero-logo-mark { width: clamp(112px, 34vw, 150px); }
+  /* one slide = one dot — visual noise on a phone */
+  .hero-dots { display: none; }
+
+  /* tighter vertical rhythm on phones */
+  .section { padding: clamp(44px, 11vw, 64px) 0; }
+
+  /* comfort: real touch targets for the controls thumbs actually hit
+     (Apple HIG / Material minimum ~44-48px) */
+  .btn { min-height: 46px; }
+  .chip { height: 38px; min-width: 36px; padding: 0 .8em; font-size: .74rem; }
+  .icon-btn { width: 42px; height: 42px; }
+
+  /* long words can never push a phone layout sideways */
+  body { overflow-wrap: break-word; }
+
   .product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; row-gap: 30px; }
   .product-grid.cols-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
   .p-info { gap: .35rem; }
   .p-name { font-size: .82rem; }
   .p-price { font-size: .84rem; }
-  .p-add { padding: .66em 1.1em; font-size: .6rem; }
+  .p-add { min-height: 38px; padding: .8em 1.2em; font-size: .6rem; }
 
   .section-head {
     flex-direction: column;
