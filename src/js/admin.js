@@ -23,6 +23,8 @@ window.TOF = window.TOF || {};
     messages: [],
     subs: [],
     sizeRows: [],       // product_sizes rows (0009) — empty until migration runs
+    heroSlides: [],     // [{ id, image_url, alt_text, link_url, sort_order, is_active }]
+    heroSaving: false,
     prodFilter: '',
     orderFilter: '',
     activeTab: 'products',
@@ -249,6 +251,7 @@ window.TOF = window.TOF || {};
     wireTabs();
     wireProducts();
     wireCategories();
+    wireHeroSlides();
     wireOrders();
     wireMessages();
 
@@ -270,6 +273,7 @@ window.TOF = window.TOF || {};
     qsa('[data-panel]').forEach((p) => { p.hidden = p.dataset.panel !== S.activeTab; });
     if (S.activeTab === 'products') paintProducts();
     if (S.activeTab === 'categories') paintCategories();
+    if (S.activeTab === 'hero-slides') paintHeroSlides();
     if (S.activeTab === 'orders') paintOrders();
     if (S.activeTab === 'messages') paintMessages();
     if (S.activeTab === 'subs') paintSubs();
@@ -281,7 +285,7 @@ window.TOF = window.TOF || {};
     const seq = ++loadAllSeq;
     const rows = (res) => { const m = dbMsg(res, 'Could not load data.'); if (m) T.toast(m); return res.data || []; };
 
-    const [prod, cats, orders, items, profiles, names, msgs, subs, sizesRes] = await Promise.all([
+    const [prod, cats, orders, items, profiles, names, msgs, subs, sizesRes, heroRes] = await Promise.all([
       T.sb.from('products').select('*').order('created_at', { ascending: false }),
       T.sb.from('categories').select('*').order('created_at', { ascending: true }),
       T.sb.from('orders').select('*').order('created_at', { ascending: false }).limit(300),
@@ -292,6 +296,7 @@ window.TOF = window.TOF || {};
       T.sb.from('newsletter_subscribers').select('*').order('created_at', { ascending: false }).limit(2000),
       /* optional 0009 table — quiet until the migration runs */
       T.sb.from('product_sizes').select('*'),
+      T.sb.from('hero_slides').select('*').order('sort_order', { ascending: true }),
     ]);
 
     if (seq !== loadAllSeq) return; // superseded
@@ -301,6 +306,7 @@ window.TOF = window.TOF || {};
     S.messages = rows(msgs);
     S.subs = rows(subs);
     S.sizeRows = sizesRes.error ? [] : (sizesRes.data || []);
+    S.heroSlides = heroRes.error ? [] : (heroRes.data || []);
 
     const profMap = {};
     rows(profiles).forEach((p) => { profMap[p.id] = p; });
@@ -806,6 +812,154 @@ window.TOF = window.TOF || {};
         </div>
       </div>`;
     }).join('');
+  }
+
+  /* ------------------------------------------------------------ hero slides -- */
+  function wireHeroSlides() {
+    document.getElementById('hero-new').addEventListener('click', () => openHeroForm(null));
+    document.getElementById('hero-cancel').addEventListener('click', () => {
+      document.getElementById('hero-form').hidden = true;
+    });
+
+    document.getElementById('hero-img').addEventListener('input', () => {
+      const wrap = document.getElementById('hero-preview');
+      const url = document.getElementById('hero-img').value.trim();
+      if (/^https?:\/\//.test(url)) {
+        wrap.style.display = 'block';
+        wrap.innerHTML = `<img src="${T.esc(url)}" alt="Preview" style="max-width:100%;height:auto;border-radius:var(--radius-md);border:1px solid var(--line)">`;
+      } else {
+        wrap.style.display = 'none';
+      }
+    });
+
+    document.getElementById('hero-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const saveBtn = document.getElementById('hero-save');
+      const id = document.getElementById('hero-id').value;
+      const image_url = document.getElementById('hero-img').value.trim();
+      const alt_text = document.getElementById('hero-alt').value.trim() || null;
+      const link_url = document.getElementById('hero-link').value.trim() || null;
+      const sort_order = num(document.getElementById('hero-sort').value, 0);
+      if (!image_url) { T.toast('Image URL is required.'); return; }
+
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = '<span class="spinner"></span> Saving…';
+      try {
+        const payload = { image_url, alt_text, link_url, sort_order, is_active: true };
+        const res = id
+          ? await T.sb.from('hero_slides').update(payload).eq('id', Number(id))
+          : await T.sb.from('hero_slides').insert(payload);
+        const m = dbMsg(res, 'Could not save the slide.');
+        if (m) { T.toast(m); return; }
+        T.toast(id ? 'Slide updated.' : 'Slide added.');
+        document.getElementById('hero-form').hidden = true;
+        await loadAll();
+        paintTab();
+      } catch { /* toast already shown */ }
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Save slide';
+    });
+
+    document.getElementById('hero-rows').addEventListener('click', async (e) => {
+      const edit = e.target.closest('[data-edit]');
+      if (edit) { openHeroForm(Number(edit.dataset.edit)); return; }
+
+      const del = e.target.closest('[data-del]');
+      if (del) {
+        const id = del.dataset.del;
+        const s = S.heroSlides.find((x) => String(x.id) === id);
+        if (!s || !confirm(`Delete slide “${s.alt_text || 'untitled'}”?`)) return;
+        del.disabled = true;
+        const res = await T.sb.from('hero_slides').delete().eq('id', id);
+        del.disabled = false;
+        const m = dbMsg(res, 'Delete failed.');
+        if (m) { T.toast(m); return; }
+        T.toast('Slide deleted.');
+        await loadAll();
+        paintTab();
+        return;
+      }
+
+      const toggle = e.target.closest('[data-toggle]');
+      if (toggle) {
+        const id = toggle.dataset.toggle;
+        const s = S.heroSlides.find((x) => String(x.id) === id);
+        if (!s) return;
+        toggle.disabled = true;
+        const res = await T.sb.from('hero_slides').update({ is_active: !s.is_active }).eq('id', id);
+        toggle.disabled = false;
+        const m = dbMsg(res);
+        if (m) { T.toast(m); return; }
+        s.is_active = !s.is_active;
+        paintHeroSlides();
+        T.toast(s.is_active ? 'Slide is now live.' : 'Slide hidden from hero.');
+      }
+
+      const mv = e.target.closest('[data-mv]');
+      if (mv) {
+        const id = mv.dataset.mv;
+        const dir = Number(mv.dataset.dir);
+        const s = S.heroSlides.find((x) => String(x.id) === id);
+        if (!s) return;
+        mv.disabled = true;
+        const res = await T.sb.from('hero_slides')
+          .update({ sort_order: s.sort_order + dir }).eq('id', id);
+        mv.disabled = false;
+        const m = dbMsg(res, 'Reorder failed.');
+        if (m) { T.toast(m); return; }
+        await loadAll();
+        paintTab();
+      }
+    });
+  }
+
+  function openHeroForm(id) {
+    const form = document.getElementById('hero-form');
+    const s = id ? S.heroSlides.find((x) => x.id === id) : null;
+    document.getElementById('hero-form-title').textContent = s ? 'Edit slide' : 'Add slide';
+    document.getElementById('hero-id').value = s ? s.id : '';
+    document.getElementById('hero-img').value = s ? s.image_url : '';
+    document.getElementById('hero-alt').value = s ? (s.alt_text || '') : '';
+    document.getElementById('hero-link').value = s ? (s.link_url || '') : '';
+    document.getElementById('hero-sort').value = s ? s.sort_order : 0;
+
+    const wrap = document.getElementById('hero-preview');
+    if (s && s.image_url) {
+      wrap.style.display = 'block';
+      wrap.innerHTML = `<img src="${T.esc(s.image_url)}" alt="Preview" style="max-width:100%;height:auto;border-radius:var(--radius-md);border:1px solid var(--line)">`;
+    } else {
+      wrap.style.display = 'none';
+    }
+
+    form.hidden = false;
+    form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    document.getElementById('hero-img').focus();
+  }
+
+  function paintHeroSlides() {
+    const tb = document.getElementById('hero-rows');
+    const list = S.heroSlides;
+    if (!list.length) {
+      tb.innerHTML = '<tr><td colspan="6"><p class="admin-note-inline">No hero slides yet — click “＋ Add slide”.</p></td></tr>';
+      return;
+    }
+    tb.innerHTML = list.map((s) => `
+      <tr>
+        <td>
+          ${s.image_url ? `<img class="thumb" src="${T.esc(s.image_url)}" alt="${T.esc(s.alt_text || 'slide')}">` : '<span class="thumb thumb-empty"></span>'}
+        </td>
+        <td class="cell-strong">${T.esc(s.alt_text || '—')}</td>
+        <td class="cell-muted">${T.esc(s.link_url || '—')}</td>
+        <td>${s.sort_order}</td>
+        <td><span class="status-pill ${s.is_active ? 'paid' : 'cancelled'}">${s.is_active ? 'live' : 'hidden'}</span></td>
+        <td class="td-actions">
+          <button class="x-btn" type="button" data-toggle="${s.id}">${s.is_active ? 'Hide' : 'Show'}</button>
+          <button class="x-btn" type="button" data-edit="${s.id}">Edit</button>
+          <button class="x-btn" type="button" data-mv="${s.id}" data-dir="-1" ${s.sort_order <= 0 ? 'disabled' : ''} title="Move up">↑</button>
+          <button class="x-btn" type="button" data-mv="${s.id}" data-dir="1" title="Move down">↓</button>
+          <button class="x-btn is-danger" type="button" data-del="${s.id}">Delete</button>
+        </td>
+      </tr>`).join('');
   }
 
   /* -------------------------------------------------------------- orders -- */

@@ -97,32 +97,25 @@
 
     <!-- ══════════════════════════ hero section ══════════════════════════════ -->
     <section class="hero" id="hero" aria-label="THE ORIGINAL FIT — premium streetwear">
-      <!-- brand emblem replaces the photo slides — THE ORIGINAL FIT logo -->
-      <div class="hero-slide hero-logo is-active" aria-hidden="true">
-        <svg class="hero-logo-mark" viewBox="0 0 200 232" role="img" aria-label="THE ORIGINAL FIT logo">
-          <circle class="lg-ring" cx="100" cy="100" r="94"/>
-          <circle class="lg-spin" cx="100" cy="100" r="82"/>
-          <text class="lg-mono" x="104" y="98" text-anchor="middle" dominant-baseline="central">OF</text>
-          <text class="lg-word" x="101" y="222" text-anchor="middle">THE ORIGINAL FIT</text>
-        </svg>
+      <!-- dynamic image slides (injected by JS from Supabase) -->
+      <div class="hero-slides" aria-label="Hero slideshow" aria-live="polite">
+        <!-- <div class="hero-slide is-active"><img src="..." alt="..."></div> -->
       </div>
+
+      <!-- dark overlay so typography stays readable over any image -->
+      <div class="hero-overlay"></div>
+
+      <!-- prev / next arrows overlaying the banner -->
+      <button class="hero-arrow hero-arrow-prev" type="button" aria-label="Previous slide">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hero-arrow-icon"><path d="m9 18 6-6-6-6"></path></svg>
+      </button>
+      <button class="hero-arrow hero-arrow-next" type="button" aria-label="Next slide">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hero-arrow-icon"><path d="m9 18 6-6-6-6"></path></svg>
+      </button>
+
       <div class="hero-gradient"></div>
 
-      <div class="hero-inner">
-        <p class="kicker hero-kicker">Streetwear — Premium Quality</p>
-        <h1 class="hero-title"><span class="line">THE</span><span class="line">ORIGINAL&nbsp;FIT</span></h1>
-        <p class="hero-subtitle">Wear Your Style</p>
-        <p class="hero-lead">Premium T-Shirts. Timeless Design.<br>Made for the ones who stand out.</p>
-        <div class="hero-cta-row">
-          <a class="btn hero-cta" href="pages/shop.html">Shop Now <span class="arrow">→</span></a>
-          <a class="hero-scroll-inline" href="#new-arrivals">(Scroll Down)</a>
-        </div>
-      </div>
-
-      <div class="hero-rail" aria-hidden="true">
-        <div class="hero-dots"></div>
-        <span class="hero-est">EST. 2024</span>
-      </div>
+    
     </section>
 
     <!-- ══════════════════════════ New Arrivals ══════════════════════════════ -->
@@ -209,7 +202,7 @@
       </div>
     </div>
     <div class="container footer-bottom">
-      <p>© <span id="year">2024</span> THE ORIGINAL FIT. All rights reserved.</p>
+      <p>© <span id="year">2026</span> THE ORIGINAL FIT. All rights reserved.</p>
       <nav aria-label="Legal">
         <a href="pages/about.html#privacy">Privacy Policy</a>
         <span class="sep">|</span>

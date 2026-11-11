@@ -80,8 +80,8 @@ html, body { overflow-x: clip; }
   /* hero: model image becomes the lower / right half, text above */
   .hero {
     height: auto;
-    min-height: 100svh;
-    max-height: 640px;
+    min-height: 100dvh;
+    max-height: 1100px;
   }
   .hero-inner {
     justify-content: flex-end;
@@ -114,8 +114,8 @@ html, body { overflow-x: clip; }
   /* comfort: real touch targets for the controls thumbs actually hit
      (Apple HIG / Material minimum ~44-48px) */
   .btn { min-height: 46px; }
-  .chip { height: 38px; min-width: 36px; padding: 0 .8em; font-size: .74rem; }
-  .icon-btn { width: 42px; height: 42px; }
+  .chip { height: 44px; min-width: 44px; padding: 0 .8em; font-size: .74rem; }
+  .icon-btn { width: 44px; height: 44px; }
 
   /* long words can never push a phone layout sideways */
   body { overflow-wrap: break-word; }
@@ -152,7 +152,7 @@ html, body { overflow-x: clip; }
   .cart-list .cart-item img { width: 64px; }
   .ci-side { grid-column: 2; flex-direction: row; align-items: center; padding-top: .2rem; }
   /* quantity steppers get full touch targets on a phone */
-  .ci-qty button { width: 40px; height: 40px; font-size: 1.02rem; }
+  .ci-qty button { width: 44px; height: 44px; font-size: 1.02rem; }
 
   .pdp-buy { flex-direction: column; }
   .pdp-wish { width: 100%; padding: 12px 0; }
@@ -168,7 +168,7 @@ html, body { overflow-x: clip; }
   :root { --nav-h: 58px; }
 
   .logo { font-size: .88rem; letter-spacing: 0; }
-  .icon-btn { width: 38px; height: 38px; }
+  .icon-btn { width: 44px; height: 44px; }
 
   .hero-title { font-size: clamp(2.5rem, 12.5vw, 3.2rem); }
 
@@ -185,4 +185,28 @@ html, body { overflow-x: clip; }
 /* very short landscape phones */
 @media (max-height: 460px) and (orientation: landscape) {
   .hero { min-height: 78vh; }
+}
+
+/* ====================================== hero carousel responsive ============ */
+
+/* tablets: keep arrows near edges, dots readable */
+@media (max-width: 1020px) {
+  .hero-arrow { width: 48px; height: 48px; font-size: 1.1rem; }
+  .hero-dot { width: 9px; height: 9px; }
+  .hero-dots-wrap { bottom: clamp(1.6rem, 4vw, 2.6rem); }
+}
+
+/* mobile: larger touch targets, arrows inset safely, dots low enough */
+@media (max-width: 640px) {
+  .hero-arrow {
+    width: 46px;
+    height: 46px;
+    font-size: 1rem;
+    background: rgba(255, 255, 255, 0.9);
+  }
+  .hero-arrow-prev { left: 0.5rem; }
+  .hero-arrow-next { right: 0.5rem; }
+  .hero-dots-wrap { bottom: clamp(1.4rem, 6vw, 2.2rem); gap: 0.5rem; }
+  .hero-dot { width: 8px; height: 8px; border-width: 1.5px; }
+  .hero-est { right: 0.6rem; bottom: clamp(1.2rem, 4vw, 1.8rem); font-size: 0.52rem; }
 }
