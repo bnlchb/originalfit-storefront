@@ -497,6 +497,8 @@ body.solid-header .site-header { background: rgba(255, 255, 255, .92); backdrop-
   display: flex;
   gap: 0.5rem;
 }
+/* no slides → no indicators at all */
+.hero-dots-wrap.is-empty { display: none; }
 .hero-dot {
   width: 10px;
   height: 10px;
