@@ -363,11 +363,13 @@ window.TOF = window.TOF || {};
       }
 
       dotsWrap?.closest('.hero-dots-wrap')?.classList.remove('is-empty');
+      btnPrev.hidden = false;               /* slides exist → controls return */
+      btnNext.hidden = false;
 
       slides.forEach((s, n) => {
         const el = document.createElement('div');
         el.className = `hero-slide${n === 0 ? ' is-active' : ''}`;
-        el.innerHTML = `<img src="${T.esc(s.image_url)}" alt="${T.esc(s.alt_text || 'Hero slide ' + (n + 1))}" loading="lazy">`;
+        el.innerHTML = `<img src="${T.esc(s.image_url)}" alt="${T.esc(s.alt_text || 'Hero slide ' + (n + 1))}" loading="${n === 0 ? 'eager' : 'lazy'}">`;
         if (s.link_url) {
           el.style.cursor = 'pointer';
           el.title = 'Open ' + T.esc(s.link_url);
