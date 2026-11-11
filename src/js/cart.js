@@ -166,10 +166,15 @@ window.TOF = window.TOF || {};
 
   function itemHTML(it) {
     const snap = Array.isArray(it.sizes) && it.sizes.length ? it.sizes : null;
+    /* chips follow the item's own size set: ladder products (and legacy
+       lines) show the six canonical sizes, One Size lines show only theirs —
+       the same rule the PDP applies, so the two can never drift apart */
+    const ownSizes = snap ? snap.filter((x) => !SIZES.includes(x.size)) : [];
+    const chipSizes = ownSizes.length ? ownSizes.map((x) => x.size) : SIZES;
     const chipFor = (s) => {
       const row = snap && (snap.find((x) => x.size === s) || {});
       const out = snap ? ((row.stock || 0) <= 0) : false;
-      return `<button type="button" class="chip${s === it.size ? ' is-on' : ''}${out ? ' is-out' : ''}" aria-pressed="${s === it.size}"${out ? ' disabled title="Out of stock"' : ''} data-size="${s}">${s}</button>`;
+      return `<button type="button" class="chip${s === it.size ? ' is-on' : ''}${out ? ' is-out' : ''}" aria-pressed="${s === it.size}"${out ? ' disabled title="Out of stock"' : ''} data-size="${T.esc(s)}">${T.esc(s)}</button>`;
     };
     return `
       <div class="cart-item" data-key="${it.key}">
@@ -177,7 +182,7 @@ window.TOF = window.TOF || {};
         <div class="ci-info">
           <h4 class="ci-name"><a href="${T.url('product.html?id=' + encodeURIComponent(it.id))}">${T.esc(it.name)}</a></h4>
           <div class="ci-size-chips" data-key="${it.key}">
-            ${SIZES.map(chipFor).join('')}
+            ${chipSizes.map(chipFor).join('')}
           </div>
           <div class="ci-qty">
             <button type="button" data-step="-1" aria-label="Decrease quantity">−</button>
