@@ -24,6 +24,7 @@ window.TOF = window.TOF || {};
     subs: [],
     sizeRows: [],       // product_sizes rows (0009) — empty until migration runs
     heroSlides: [],     // [{ id, image_url, alt_text, link_url, sort_order, is_active }]
+    heroUploadedUrl: '', // URL of image uploaded via dropzone (not yet saved)
     heroSaving: false,
     prodFilter: '',
     orderFilter: '',
@@ -389,7 +390,7 @@ window.TOF = window.TOF || {};
         // without this the bucket fills with unreferenced copies over time
         (Array.isArray(p.images) ? p.images : []).concat(p.image_url || [])
           .filter(Boolean).forEach((u) => {
-            const path = bucketPathOf(u);
+            const path = bucketPathOf(u, 'product-images');
             if (path) T.sb.storage.from('product-images').remove([path]).catch(() => {});
           });
         S.products = S.products.filter((x) => x.id !== id);
@@ -466,7 +467,7 @@ window.TOF = window.TOF || {};
     if (!shot) return;
     S.prodPhotos.splice(i, 1);
     if (S.prodCover >= S.prodPhotos.length) S.prodCover = Math.max(0, S.prodPhotos.length - 1);
-    const path = bucketPathOf(shot.url);
+    const path = bucketPathOf(shot.url, 'product-images');
     if (path) {
       /* Delete the bucket object only when NO other product still references
          this URL — two rows sharing a photo means deleting the file breaks
@@ -498,8 +499,8 @@ window.TOF = window.TOF || {};
     paintGallery();
   }
 
-  function bucketPathOf(url) {
-    try { const u = new URL(url); return u.pathname.split('/storage/v1/object/public/product-images/')[1] || null; }
+  function bucketPathOf(url, bucket) {
+    try { const u = new URL(url); return u.pathname.split(`/storage/v1/object/public/${bucket}/`)[1] || null; }
     catch { return null; }
   }
 
@@ -832,6 +833,56 @@ window.TOF = window.TOF || {};
       }
     });
 
+    /* ----- hero slide image upload (drag & drop / browse) ----- */
+    const heroDrop = document.getElementById('hero-drop');
+    const heroFile = document.getElementById('hero-img-file');
+    const heroCount = document.getElementById('hero-count');
+
+    heroDrop.addEventListener('click', () => heroFile.click());
+    heroDrop.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); heroFile.click(); }
+    });
+    heroFile.addEventListener('change', () => {
+      addHeroImage(Array.from(heroFile.files || []));
+      heroFile.value = '';
+    });
+
+    ['dragenter', 'dragover'].forEach((ev) =>
+      heroDrop.addEventListener(ev, (e) => { e.preventDefault(); heroDrop.classList.add('is-drag'); }));
+    ['dragleave', 'drop'].forEach((ev) =>
+      heroDrop.addEventListener(ev, (e) => { e.preventDefault(); heroDrop.classList.remove('is-drag'); }));
+    heroDrop.addEventListener('drop', (e) => addHeroImage(Array.from((e.dataTransfer || {}).files || [])));
+
+    async function addHeroImage(files) {
+      const imgs = files.filter((f) => f && /^image\//.test(f.type));
+      if (!imgs.length) { T.toast('Choose image files only.'); return; }
+      const f = imgs[0]; // one image per slide
+      const ext = (f.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+      const path = `admin/${Date.now()}-hero.${ext}`;
+      const up = await T.sb.storage.from('hero-images').upload(path, f, {
+        contentType: f.type || 'image/jpeg',
+        cacheControl: '3600',
+        upsert: false,
+      });
+      const m = dbMsg(up, `Upload failed for “${f.name}”.`);
+      if (m) { T.toast(m); return; }
+      const url = T.sb.storage.from('hero-images').getPublicUrl(path).data.publicUrl;
+      S.heroUploadedUrl = url;
+      document.getElementById('hero-img').value = url;
+      heroCount.textContent = `Image uploaded (${f.name})`;
+      heroDrop.classList.add('has-image');
+      T.toast('Image uploaded.');
+    }
+
+    /* clear uploaded image state when the form is cancelled */
+    document.getElementById('hero-cancel').addEventListener('click', () => {
+      S.heroUploadedUrl = '';
+      document.getElementById('hero-img').value = '';
+      document.getElementById('hero-count').textContent = 'No image uploaded';
+      heroDrop.classList.remove('has-image');
+      document.getElementById('hero-preview').style.display = 'none';
+    });
+
     document.getElementById('hero-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const saveBtn = document.getElementById('hero-save');
@@ -874,6 +925,11 @@ window.TOF = window.TOF || {};
         del.disabled = false;
         const m = dbMsg(res, 'Delete failed.');
         if (m) { T.toast(m); return; }
+        /* remove the image from storage too */
+        const path = bucketPathOf(s.image_url, 'hero-images');
+        if (path) {
+          T.sb.storage.from('hero-images').remove([path]).catch(() => {});
+        }
         T.toast('Slide deleted.');
         await loadAll();
         paintTab();
@@ -924,10 +980,18 @@ window.TOF = window.TOF || {};
     document.getElementById('hero-sort').value = s ? s.sort_order : 0;
 
     const wrap = document.getElementById('hero-preview');
+    const count = document.getElementById('hero-count');
+    const drop = document.getElementById('hero-drop');
     if (s && s.image_url) {
+      S.heroUploadedUrl = s.image_url;
+      count.textContent = `Image uploaded (existing)`;
+      drop.classList.add('has-image');
       wrap.style.display = 'block';
       wrap.innerHTML = `<img src="${T.esc(s.image_url)}" alt="Preview" style="max-width:100%;height:auto;border-radius:var(--radius-md);border:1px solid var(--line)">`;
     } else {
+      S.heroUploadedUrl = '';
+      count.textContent = 'No image uploaded';
+      drop.classList.remove('has-image');
       wrap.style.display = 'none';
     }
 

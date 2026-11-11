@@ -376,3 +376,9 @@ textarea { border-radius: var(--radius-sm); }
   background: var(--bg-alt);
   text-align: center;
 }
+
+/* dropzone visual feedback when an image is uploaded */
+#hero-drop.has-image {
+  border-color: var(--ink);
+  background: rgba(10, 10, 10, 0.04);
+}
