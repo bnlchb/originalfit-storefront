@@ -353,6 +353,9 @@ window.TOF = window.TOF || {};
 
     wireProductGallery();
 
+    /* One Size ↔ ladder mutual exclusion updates as the admin types */
+    document.getElementById('prod-sizes').addEventListener('input', refreshSizeLock);
+
     form.addEventListener('submit', (e) => { e.preventDefault(); saveProduct(); });
 
     document.getElementById('prod-rows').addEventListener('click', async (e) => {
@@ -545,6 +548,7 @@ window.TOF = window.TOF || {};
         ? (szMap.get(inp.dataset.sz) || 0)
         : (inp.dataset.sz === 'M' ? Math.max(0, num(p && p.stock)) : 0);
     });
+    refreshSizeLock(); // reflect the One Size ↔ ladder exclusion of the stored rows
     document.getElementById('prod-desc').value = p ? (p.description || '') : '';
     document.getElementById('prod-newflag').checked = p ? !!p.is_new : false;
     document.getElementById('prod-best').checked = p ? !!p.is_best_seller : false;
@@ -562,6 +566,24 @@ window.TOF = window.TOF || {};
     form.hidden = false;
     form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     document.getElementById('prod-name').focus();
+  }
+
+  /* One Size (0011) ↔ size ladder are mutually exclusive: whichever side
+     carries stock locks and dims the other, so a product can never mix the
+     two modes (the DB only stores what the form allows through). */
+  function refreshSizeLock() {
+    const inputs = Array.from(document.querySelectorAll('#prod-sizes .sz-cell input'));
+    const one = inputs.find((i) => i.dataset.sz === 'One Size');
+    if (!one) return;
+    const ladder = inputs.filter((i) => i !== one);
+    const oneHas = Math.trunc(Number(one.value)) > 0;
+    const ladderHas = ladder.some((i) => Math.trunc(Number(i.value)) > 0);
+    ladder.forEach((i) => {
+      i.disabled = oneHas;
+      i.closest('.sz-cell').classList.toggle('is-off', oneHas);
+    });
+    one.disabled = !oneHas && ladderHas;
+    one.closest('.sz-cell').classList.toggle('is-off', !oneHas && ladderHas);
   }
 
   function fillCategoryOptions(sel, selectedId) {
@@ -619,9 +641,14 @@ window.TOF = window.TOF || {};
     saveBtn.innerHTML = '<span class="spinner"></span> Saving…';
     try {
       // per-size stock (0009) — zero is allowed; an all-zero product simply
-      // shows as out of stock on the storefront
-      const sizeRows = Array.from(document.querySelectorAll('#prod-sizes .sz-cell input'))
+      // shows as out of stock on the storefront. 'One Size' (0011) is
+      // exclusive: when it carries stock, the six-size ladder is dropped
+      // from the product entirely (and restored when cleared).
+      const allRows = Array.from(document.querySelectorAll('#prod-sizes .sz-cell input'))
         .map((inp) => ({ size: inp.dataset.sz, stock: Math.max(0, Math.trunc(num(inp.value))) }));
+      const oneRow = allRows.find((r) => r.size === 'One Size');
+      const oneMode = !!oneRow && oneRow.stock > 0;
+      const sizeRows = oneMode ? [oneRow] : allRows.filter((r) => r.size !== 'One Size');
       const totalStock = sizeRows.reduce((s, r) => s + r.stock, 0);
 
       const originalRaw = document.getElementById('prod-orig').value;
@@ -652,13 +679,24 @@ window.TOF = window.TOF || {};
         pid = inserted ? Number(inserted.id) : null;
       }
 
-      // every size row is written; the DB trigger re-sums products.stock
+      // every size row is written; the DB trigger re-sums products.stock.
+      // Switching between ladder and One Size leaves the other mode's rows
+      // behind — clear them so the product carries exactly one mode.
       if (pid != null) {
         const up = await T.sb.from('product_sizes').upsert(
           sizeRows.map((r) => ({ product_id: pid, size: r.size, stock: r.stock })),
           { onConflict: 'product_id,size' });
         const m2 = dbMsg(up, 'Product saved, but per-size stock could not be updated.');
         if (m2) T.toast(m2);
+        const stale = S.sizeRows.some((r) => Number(r.product_id) === Number(pid)
+          && (oneMode ? r.size !== 'One Size' : r.size === 'One Size'));
+        if (!m2 && stale) {
+          const del = oneMode
+            ? await T.sb.from('product_sizes').delete().eq('product_id', pid).neq('size', 'One Size')
+            : await T.sb.from('product_sizes').delete().eq('product_id', pid).eq('size', 'One Size');
+          const m3 = dbMsg(del, 'Product saved, but the previous size setup could not be fully cleared.');
+          if (m3) T.toast(m3);
+        }
       }
 
       const base = id ? 'Product updated.' : 'Product added to the shop.';
