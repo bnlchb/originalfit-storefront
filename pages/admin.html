@@ -141,6 +141,7 @@
           <nav class="admin-tabs" id="admin-tabs" aria-label="Admin sections">
             <button class="tab-btn is-on" data-tab="products" type="button">Products</button>
             <button class="tab-btn" data-tab="categories" type="button">Categories</button>
+            <button class="tab-btn" data-tab="hero-slides" type="button">Hero slides</button>
             <button class="tab-btn" data-tab="orders" type="button">Orders</button>
             <button class="tab-btn" data-tab="messages" type="button">Messages</button>
             <button class="tab-btn" data-tab="subs" type="button">Subscribers</button>
@@ -258,6 +259,56 @@
             </form>
 
             <div class="admin-grid" id="cat-list"></div>
+          </section>
+
+          <!-- ── hero slides ────────────────────────────────────────────── -->
+          <section class="admin-panel" data-panel="hero-slides" hidden>
+            <div class="admin-toolbar">
+              <span class="admin-note-inline">Full-bleed images shown in the homepage hero carousel.</span>
+              <button class="btn btn-sm" id="hero-new" type="button">＋ Add slide</button>
+            </div>
+
+            <form class="panel-card prod-form" id="hero-form" hidden novalidate>
+              <h3 id="hero-form-title">Add slide</h3>
+              <input type="hidden" id="hero-id">
+              <div class="form-grid" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+                <div class="field">
+                  <label for="hero-img">Image URL</label>
+                  <input id="hero-img" type="url" placeholder="https://images.unsplash.com/…" required>
+                </div>
+                <div class="field">
+                  <label for="hero-alt">Alt text</label>
+                  <input id="hero-alt" type="text" placeholder="Describe the image for screen readers">
+                </div>
+                <div class="field">
+                  <label for="hero-link">Link URL (optional)</label>
+                  <input id="hero-link" type="url" placeholder="pages/shop.html">
+                </div>
+                <div class="field">
+                  <label for="hero-sort">Sort order</label>
+                  <input id="hero-sort" type="number" min="0" step="1" value="0" placeholder="0">
+                </div>
+              </div>
+              <div class="field field-wide">
+                <label for="hero-preview">Preview</label>
+                <div id="hero-preview" class="hero-preview-wrap" style="display:none"></div>
+              </div>
+              <div class="btn-row">
+                <button class="btn btn-sm" type="submit" id="hero-save">Save slide</button>
+                <button class="btn btn-outline btn-sm" type="button" id="hero-cancel">Cancel</button>
+              </div>
+            </form>
+
+            <div class="table-scroll">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Preview</th><th>Alt text</th><th>Link</th><th>Sort</th><th>Status</th><th class="th-actions">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="hero-rows"></tbody>
+              </table>
+            </div>
           </section>
 
           <!-- ── orders ───────────────────────────────────────────────── -->

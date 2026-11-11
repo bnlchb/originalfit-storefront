@@ -296,34 +296,138 @@ window.TOF = window.TOF || {};
   }
 
   /* ---------------------------------------------------------- hero slider -- */
-  function initHeroSlider() {
+  /* Dynamic hero carousel. Fetches active slides from Supabase (hero_slides
+     table) and renders them as full-bleed images with fade/slide transitions.
+     Falls back to the static SVG logo when Supabase is not connected or when
+     no slides exist — the page never breaks. */
+  async function initHeroSlider() {
     const hero = qs('#hero');
     if (!hero) return;
-    const slides = qsa('.hero-slide', hero);
-    const dotsWrap = qs('.hero-dots', hero);
-    if (!slides.length || !dotsWrap) return;
 
+    const slidesWrap = qs('.hero-slides', hero);
+    const dotsWrap = qs('.hero-dots', hero);
+    const btnPrev = qs('.hero-arrow-prev', hero);
+    const btnNext = qs('.hero-arrow-next', hero);
+    if (!slidesWrap || !dotsWrap || !btnPrev || !btnNext) return;
+
+    /* autoplay interval in ms — easy to configure */
+    const AUTOPLAY_MS = 5000;
+
+    let slides = [];          // [{ image_url, alt_text, link_url, id }]
     let index = 0;
     let timer = null;
+    let animating = false;    // re-entry guard during transitions
+
+    /* Fetch slides from Supabase. In demo mode (no SB) we keep slides empty
+       so the fallback logo remains visible. */
+    async function loadSlides() {
+      if (!T.sb) return;
+      const { data, error } = await T.sb
+        .from('hero_slides')
+        .select('id, image_url, alt_text, link_url, sort_order, is_active')
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true });
+      if (error) {
+        console.warn('[TOF hero] could not load slides:', error.message);
+        return;
+      }
+      slides = Array.isArray(data) ? data : [];
+      render();
+    }
+
+    function render() {
+      dotsWrap.innerHTML = '';
+      slidesWrap.innerHTML = '';
+
+      if (!slides.length) {
+        /* fallback: nothing to show — static typography still reads fine over
+           the hero gradient/overlay. Arrows/dots stay hidden via CSS. */
+        btnPrev.hidden = true;
+        btnNext.hidden = true;
+        qs('.hero-dots-wrap', hero)?.classList.add('is-empty');
+        return;
+      }
+
+      qs('.hero-dots-wrap', hero)?.classList.remove('is-empty');
+
+      slides.forEach((s, n) => {
+        const el = document.createElement('div');
+        el.className = `hero-slide${n === 0 ? ' is-active' : ''}`;
+        el.innerHTML = `<img src="${T.esc(s.image_url)}" alt="${T.esc(s.alt_text || 'Hero slide ' + (n + 1))}" loading="lazy">`;
+        if (s.link_url) {
+          el.style.cursor = 'pointer';
+          el.title = 'Open ' + T.esc(s.link_url);
+          el.addEventListener('click', () => { stop(); location.href = s.link_url; });
+        }
+        slidesWrap.appendChild(el);
+      });
+
+      slides.forEach((_, n) => {
+        const b = document.createElement('button');
+        b.className = `hero-dot${n === 0 ? ' is-active' : ''}`;
+        b.setAttribute('aria-label', 'Show slide ' + (n + 1));
+        b.type = 'button';
+        b.addEventListener('click', () => { go(n); restart(); });
+        dotsWrap.appendChild(b);
+      });
+
+      updateArrows();
+    }
+
+    function updateArrows() {
+      const dots = qsa('.hero-dot', dotsWrap);
+      dots.forEach((d, n) => d.classList.toggle('is-active', n === index));
+      slidesWrap.querySelectorAll('.hero-slide').forEach((s, n) => {
+        s.classList.toggle('is-active', n === index);
+        s.classList.remove('is-leaving');
+      });
+      btnPrev.disabled = index === 0;
+      btnNext.disabled = index === slides.length - 1;
+      btnPrev.classList.toggle('is-disabled', index === 0);
+      btnNext.classList.toggle('is-disabled', index === slides.length - 1);
+    }
 
     function go(i) {
+      if (animating || slides.length <= 1) return;
+      animating = true;
+      const from = index;
       index = (i + slides.length) % slides.length;
-      slides.forEach((s, n) => s.classList.toggle('is-active', n === index));
-      qsa('.hero-dot', dotsWrap).forEach((d, n) => d.classList.toggle('is-active', n === index));
+
+      const leaving = slidesWrap.querySelectorAll('.hero-slide')[from];
+      const entering = slidesWrap.querySelectorAll('.hero-slide')[index];
+      if (leaving) leaving.classList.add('is-leaving');
+      if (entering) entering.classList.add('is-active');
+
+      setTimeout(() => {
+        if (leaving) {
+          leaving.classList.remove('is-active', 'is-leaving');
+        }
+        updateArrows();
+        animating = false;
+      }, 700);
     }
 
-    dotsWrap.innerHTML = slides.map((_, n) =>
-      `<button class="hero-dot${n === 0 ? ' is-active' : ''}" aria-label="Show slide ${n + 1}"></button>`).join('');
-    qsa('.hero-dot', dotsWrap).forEach((d, n) => d.addEventListener('click', () => { go(n); restart(); }));
+    function next() { if (index < slides.length - 1) go(index + 1); else go(0); }
+    function prev() { if (index > 0) go(index - 1); else go(slides.length - 1); }
 
-    go(0);
-    function restart() {
-      clearInterval(timer);
-      timer = setInterval(() => go(index + 1), 6500);
-    }
-    restart();
+    function start() { stop(); timer = setInterval(next, AUTOPLAY_MS); }
+    function stop() { if (timer) { clearInterval(timer); timer = null; } }
+
+    btnPrev.addEventListener('click', () => { prev(); start(); });
+    btnNext.addEventListener('click', () => { next(); start(); });
+
+    /* pause autoplay on hover / interaction, resume when idle */
+    hero.addEventListener('mouseenter', stop, { passive: true });
+    hero.addEventListener('mouseleave', start, { passive: true });
+    hero.addEventListener('keydown', start, { passive: true }); /* resume on keyboard nav */
+
     document.addEventListener('visibilitychange', () => {
-      if (document.hidden) clearInterval(timer); else restart();
+      if (document.hidden) stop(); else start();
+    });
+
+    loadSlides().then(() => {
+      updateArrows();
+      if (slides.length) start();
     });
   }
 
