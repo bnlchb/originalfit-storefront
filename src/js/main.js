@@ -304,6 +304,9 @@ window.TOF = window.TOF || {};
     const hero = qs('#hero');
     if (!hero) return;
 
+    /* wait for Supabase to be ready before fetching slides */
+    await T.whenReady();
+
     const slidesWrap = qs('.hero-slides', hero);
     const dotsWrap = qs('.hero-dots', hero);
     const btnPrev = qs('.hero-arrow-prev', hero);
