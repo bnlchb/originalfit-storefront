@@ -99,7 +99,16 @@
     <section class="hero" id="hero" aria-label="THE ORIGINAL FIT — premium streetwear">
       <!-- dynamic image slides (injected by JS from Supabase) -->
       <div class="hero-slides" aria-label="Hero slideshow" aria-live="polite">
-        <!-- <div class="hero-slide is-active"><img src="..." alt="..."></div> -->
+        <!-- fallback brand slide — paints instantly, and stays whenever no
+             hero image has loaded (slow network, demo mode, no slides yet) -->
+        <div class="hero-slide hero-slide--logo is-active" aria-hidden="true">
+          <svg class="hero-logo-mark" viewBox="0 0 200 232" role="img" aria-label="THE ORIGINAL FIT logo">
+            <circle class="lg-ring" cx="100" cy="100" r="94"/>
+            <circle class="lg-spin" cx="100" cy="100" r="82"/>
+            <text class="lg-mono" x="104" y="98" text-anchor="middle" dominant-baseline="central">OF</text>
+            <text class="lg-word" x="101" y="222" text-anchor="middle">THE ORIGINAL FIT</text>
+          </svg>
+        </div>
       </div>
 
       <!-- dark overlay so typography stays readable over any image -->
@@ -115,7 +124,10 @@
 
       <div class="hero-gradient"></div>
 
-    
+      <!-- dot indicators (JS builds one button per slide) -->
+      <div class="hero-dots-wrap" aria-hidden="true">
+        <div class="hero-dots"></div>
+      </div>
     </section>
 
     <!-- ══════════════════════════ New Arrivals ══════════════════════════════ -->

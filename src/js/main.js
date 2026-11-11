@@ -308,10 +308,19 @@ window.TOF = window.TOF || {};
     await T.whenReady();
 
     const slidesWrap = qs('.hero-slides', hero);
-    const dotsWrap = qs('.hero-dots', hero);
+    const dotsWrap = qs('.hero-dots', hero);          /* optional — degrade, never bail */
     const btnPrev = qs('.hero-arrow-prev', hero);
     const btnNext = qs('.hero-arrow-next', hero);
-    if (!slidesWrap || !dotsWrap || !btnPrev || !btnNext) return;
+    if (!slidesWrap || !btnPrev || !btnNext) return;
+
+    /* the static brand slide painted in the HTML — re-inserted whenever no
+       DB slide is available, so the hero is never an empty gradient */
+    const fallbackSlide = slidesWrap.querySelector('.hero-slide--logo');
+
+    /* controls start hidden; render() reveals them only when slides exist —
+       no orphaned arrows while loading, in demo mode, or after an error */
+    btnPrev.hidden = true;
+    btnNext.hidden = true;
 
     /* autoplay interval in ms — easy to configure */
     const AUTOPLAY_MS = 5000;
@@ -324,7 +333,7 @@ window.TOF = window.TOF || {};
     /* Fetch slides from Supabase. In demo mode (no SB) we keep slides empty
        so the fallback logo remains visible. */
     async function loadSlides() {
-      if (!T.sb) return;
+      if (!T.sb) { render(); return; }    /* demo mode → fallback emblem stays */
       const { data, error } = await T.sb
         .from('hero_slides')
         .select('id, image_url, alt_text, link_url, sort_order, is_active')
@@ -332,6 +341,7 @@ window.TOF = window.TOF || {};
         .order('sort_order', { ascending: true });
       if (error) {
         console.warn('[TOF hero] could not load slides:', error.message);
+        render();                         /* error → fallback, controls hidden */
         return;
       }
       slides = Array.isArray(data) ? data : [];
@@ -339,19 +349,20 @@ window.TOF = window.TOF || {};
     }
 
     function render() {
-      dotsWrap.innerHTML = '';
+      if (dotsWrap) dotsWrap.innerHTML = '';
       slidesWrap.innerHTML = '';
 
       if (!slides.length) {
-        /* fallback: nothing to show — static typography still reads fine over
-           the hero gradient/overlay. Arrows/dots stay hidden via CSS. */
+        /* nothing to show — re-paint the brand emblem and keep the controls
+           hidden; the hero stays premium instead of an empty gradient */
+        if (fallbackSlide) slidesWrap.appendChild(fallbackSlide.cloneNode(true));
         btnPrev.hidden = true;
         btnNext.hidden = true;
-        qs('.hero-dots-wrap', hero)?.classList.add('is-empty');
+        dotsWrap?.closest('.hero-dots-wrap')?.classList.add('is-empty');
         return;
       }
 
-      qs('.hero-dots-wrap', hero)?.classList.remove('is-empty');
+      dotsWrap?.closest('.hero-dots-wrap')?.classList.remove('is-empty');
 
       slides.forEach((s, n) => {
         const el = document.createElement('div');
@@ -366,6 +377,7 @@ window.TOF = window.TOF || {};
       });
 
       slides.forEach((_, n) => {
+        if (!dotsWrap) return;
         const b = document.createElement('button');
         b.className = `hero-dot${n === 0 ? ' is-active' : ''}`;
         b.setAttribute('aria-label', 'Show slide ' + (n + 1));
@@ -378,7 +390,7 @@ window.TOF = window.TOF || {};
     }
 
     function updateArrows() {
-      const dots = qsa('.hero-dot', dotsWrap);
+      const dots = dotsWrap ? qsa('.hero-dot', dotsWrap) : [];
       dots.forEach((d, n) => d.classList.toggle('is-active', n === index));
       slidesWrap.querySelectorAll('.hero-slide').forEach((s, n) => {
         s.classList.toggle('is-active', n === index);

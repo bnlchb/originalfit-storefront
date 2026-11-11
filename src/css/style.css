@@ -515,6 +515,39 @@ body.solid-header .site-header { background: rgba(255, 255, 255, .92); backdrop-
   outline: 2px solid var(--ink);
   outline-offset: 2px;
 }
+/* hidden attribute must actually hide the arrows (author display would win) */
+.hero-arrow[hidden] { display: none; }
+
+/* --- fallback brand slide — paints before/in place of hero photos --- */
+.hero-slide--logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, .92);   /* over the dark hero overlay */
+}
+.hero-logo-mark {
+  width: clamp(150px, 19vw, 224px);
+  height: auto;
+  animation: logo-float 7s var(--ease) infinite;
+}
+.lg-ring { fill: none; stroke: currentColor; stroke-width: 2.5; }
+.lg-spin {
+  fill: none; stroke: currentColor; stroke-width: 1.4;
+  stroke-dasharray: 2 9;
+  transform-box: view-box;
+  transform-origin: 100px 100px;     /* center of the ring (viewBox units) */
+  animation: logo-spin 16s linear infinite;
+}
+.lg-mono { font-size: 56px; font-weight: 900; letter-spacing: 8px; fill: currentColor; }
+.lg-word { font-size: 12px; font-weight: 700; letter-spacing: 5px; fill: currentColor; opacity: .75; }
+@keyframes logo-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+@keyframes logo-spin { to { transform: rotate(1turn); } }
+@media (prefers-reduced-motion: reduce) {
+  .hero-logo-mark, .lg-spin { animation: none; }
+}
 .hero-est {
   position: absolute;
   bottom: clamp(1.6rem, 4vw, 2.6rem);
@@ -617,19 +650,6 @@ body.solid-header .site-header { background: rgba(255, 255, 255, .92); backdrop-
   align-items: center;
   justify-content: center;
   gap: 1.1rem;
-}
-.hero-dots { display: flex; flex-direction: column; gap: .55rem; align-items: center; }
-.hero-dot {
-  width: 3px;
-  height: 26px;
-  border-radius: 4px;
-  background: rgba(10, 10, 10, .22);
-  transition: background var(--ease) .3s, height var(--ease) .3s;
-}
-.hero-dot:hover { background: rgba(10, 10, 10, .5); }
-.hero-dot.is-active {
-  height: 40px;
-  background: var(--ink);
 }
 .hero-est {
   margin-top: 1.2rem;

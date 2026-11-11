@@ -95,18 +95,8 @@ html, body { overflow-x: clip; }
   .hero-dot.is-active { height: 32px; }
   .hero-est { font-size: .56rem; }
 
-  /* single-slide logo hero: the emblem floats in the clear upper zone,
-     horizontally centered, above the bottom-anchored text block */
-  .hero-slide.hero-logo {
-    left: 0;
-    align-items: flex-start;
-    justify-content: center;
-    padding-top: calc(var(--nav-h) + 7vh);
-    pointer-events: none;
-  }
+  /* brand fallback slide sizes down with the phone */
   .hero-logo-mark { width: clamp(112px, 34vw, 150px); }
-  /* one slide = one dot — visual noise on a phone */
-  .hero-dots { display: none; }
 
   /* tighter vertical rhythm on phones */
   .section { padding: clamp(44px, 11vw, 64px) 0; }
