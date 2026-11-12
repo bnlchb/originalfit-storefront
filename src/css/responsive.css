@@ -32,14 +32,6 @@ html, body { overflow-x: clip; }
   /* hero simplifies: stronger gradient, text stays readable */
   .hero { height: clamp(440px, 62vh, 560px); }
   .hero-slide, .hero-media { left: 30%; }
-  .hero-gradient {
-    background: linear-gradient(90deg,
-      rgba(255, 255, 255, .97) 0%,
-      rgba(248, 248, 246, .94) 32%,
-      rgba(244, 244, 242, .7) 52%,
-      rgba(244, 244, 242, .18) 72%,
-      rgba(244, 244, 242, .05) 88%);
-  }
   .hero-lead { max-width: 36ch; }
 
   .pdp-grid { grid-template-columns: 1fr; }
