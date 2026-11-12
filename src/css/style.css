@@ -428,13 +428,6 @@ body.solid-header .site-header { background: rgba(255, 255, 255, .92); backdrop-
   transform: translateX(-100%);
   z-index: 1;
 }
-.hero-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.28) 0%, rgba(0, 0, 0, 0.12) 40%, rgba(0, 0, 0, 0.34) 100%);
-}
-
 /* --- arrows overlaying the banner --- */
 .hero-arrow {
   position: absolute;
@@ -561,25 +554,6 @@ body.solid-header .site-header { background: rgba(255, 255, 255, .92); backdrop-
   text-transform: uppercase;
   color: var(--muted);
   z-index: 6;
-}
-
-.hero-gradient {
-  position: absolute;
-  inset: -1px;
-  background:
-    linear-gradient(90deg,
-      rgba(255, 255, 255, .96) 0%,
-      rgba(248, 248, 246, .88) 26%,
-      rgba(244, 244, 242, .45) 46%,
-      rgba(244, 244, 242, .06) 64%,
-      rgba(244, 244, 242, 0) 78%);
-  z-index: 0;
-}
-.hero-gradient::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(0deg, rgba(10, 10, 10, .18), transparent 30%);
 }
 
 .hero-inner {
