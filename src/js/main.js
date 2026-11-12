@@ -406,10 +406,7 @@ window.TOF = window.TOF || {};
         s.classList.toggle('is-active', n === index);
         s.classList.remove('is-leaving');
       });
-      btnPrev.disabled = index === 0;
-      btnNext.disabled = index === slides.length - 1;
-      btnPrev.classList.toggle('is-disabled', index === 0);
-      btnNext.classList.toggle('is-disabled', index === slides.length - 1);
+
     }
 
     function go(i) {
@@ -614,6 +611,7 @@ window.TOF = window.TOF || {};
       qsa('#pdp-thumbs .pdpt').forEach((t, k) => t.classList.toggle('is-on', k === gi));
     };
     const paint = (i) => {
+      resetZoom(); // clear any active hover-to-zoom when the photo changes
       gi = i < 0 ? gallery.length - 1 : (i >= gallery.length ? 0 : i); // wrap-around
       const el = qs('#pdp-img');
       const next = gallery[gi];
@@ -653,6 +651,44 @@ window.TOF = window.TOF || {};
     }
 
     if (multi) { media.classList.add('has-multi'); }
+
+    /* --- hover-to-zoom (magnifying lens) on the main product image --- */
+    (function () {
+      const imgEl = qs('#pdp-img');
+      if (!imgEl) return;
+      const ZOOM = 2.2;
+      let active = false;
+
+      const resetZoom = () => {
+        if (!active) return;
+        active = false;
+        imgEl.style.transition = 'transform 0.4s var(--ease)';
+        imgEl.style.transformOrigin = 'center center';
+        imgEl.style.transform = 'scale(1)';
+        imgEl.classList.remove('is-zoom-panning');
+      };
+
+      media.addEventListener('mouseenter', () => {
+        active = true;
+        imgEl.classList.remove('is-zoom-panning');
+        imgEl.style.transition = 'transform 0.4s var(--ease)';
+        imgEl.style.transformOrigin = 'center center';
+        imgEl.style.transform = `scale(${ZOOM})`;
+      });
+
+      media.addEventListener('mousemove', (e) => {
+        if (!active) return;
+        imgEl.classList.add('is-zoom-panning');
+        imgEl.style.transition = 'none'; // zero lag while panning
+        const r = media.getBoundingClientRect();
+        const x = ((e.clientX - r.left) / r.width) * 100;
+        const y = ((e.clientY - r.top) / r.height) * 100;
+        imgEl.style.transformOrigin = `${x}% ${y}%`;
+        imgEl.style.transform = `scale(${ZOOM})`;
+      });
+
+      media.addEventListener('mouseleave', resetZoom);
+    })();
 
     // fullscreen viewer (brand-consistent): click any photo → large, clear view
     const lb = qs('#pdp-lb');
