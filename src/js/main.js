@@ -612,6 +612,17 @@ window.TOF = window.TOF || {};
       countEl.textContent = (gi + 1) + ' / ' + gallery.length;
       qsa('#pdp-thumbs .pdpt').forEach((t, k) => t.classList.toggle('is-on', k === gi));
     };
+    const imgEl = qs('#pdp-img');
+    const ZOOM = 2.2;
+    let zoomActive = false;
+    const resetZoom = () => {
+      if (!zoomActive) return;
+      zoomActive = false;
+      imgEl.style.transition = 'transform 0.4s var(--ease)';
+      imgEl.style.transformOrigin = 'center center';
+      imgEl.style.transform = 'scale(1)';
+      imgEl.classList.remove('is-zoom-panning');
+    };
     const paint = (i) => {
       resetZoom(); // clear any active hover-to-zoom when the photo changes
       gi = i < 0 ? gallery.length - 1 : (i >= gallery.length ? 0 : i); // wrap-around
@@ -656,22 +667,9 @@ window.TOF = window.TOF || {};
 
     /* --- hover-to-zoom (magnifying lens) on the main product image --- */
     (function () {
-      const imgEl = qs('#pdp-img');
       if (!imgEl) return;
-      const ZOOM = 2.2;
-      let active = false;
-
-      const resetZoom = () => {
-        if (!active) return;
-        active = false;
-        imgEl.style.transition = 'transform 0.4s var(--ease)';
-        imgEl.style.transformOrigin = 'center center';
-        imgEl.style.transform = 'scale(1)';
-        imgEl.classList.remove('is-zoom-panning');
-      };
-
       media.addEventListener('mouseenter', () => {
-        active = true;
+        zoomActive = true;
         imgEl.classList.remove('is-zoom-panning');
         imgEl.style.transition = 'transform 0.4s var(--ease)';
         imgEl.style.transformOrigin = 'center center';
@@ -679,7 +677,7 @@ window.TOF = window.TOF || {};
       });
 
       media.addEventListener('mousemove', (e) => {
-        if (!active) return;
+        if (!zoomActive) return;
         imgEl.classList.add('is-zoom-panning');
         imgEl.style.transition = 'none'; // zero lag while panning
         const r = media.getBoundingClientRect();
