@@ -31,16 +31,7 @@ html, body { overflow-x: clip; }
 
   /* hero simplifies: stronger gradient, text stays readable */
   .hero { height: clamp(440px, 62vh, 560px); }
-  .hero-inner { padding-top: 62px; }
-  .hero-logo { margin-bottom: clamp(1.5rem, 4vw, 2.5rem); }
-  .hero-text { max-width: 40ch; margin-bottom: clamp(1.5rem, 4vw, 2rem); }
-  .hero-title { font-size: clamp(2.5rem, 10vw, 3.2rem); margin-bottom: .75rem; }
-  .hero-lead { font-size: .9rem; margin-bottom: 1rem; }
   .hero-bottom { height: 80px; }
-  .trust-bar { margin-top: clamp(.75rem, 3vw, 1.5rem); padding: .05rem; }
-  .trust-item { padding: .55rem .9rem; font-size: .66rem; gap: .5rem; }
-  .trust-divider { height: 18px; margin: 0 .15rem; }
-  .trust-icon { width: 14px; height: 14px; }
 
   .pdp-grid { grid-template-columns: 1fr; }
   .pdp-sticky { position: static; }
@@ -83,19 +74,7 @@ html, body { overflow-x: clip; }
     min-height: 100dvh;
     max-height: 1100px;
   }
-  .hero-inner {
-    justify-content: center;
-    padding-bottom: 4rem;
-  }
-  .hero-logo { margin-bottom: clamp(1.5rem, 5vw, 2.5rem); }
-  .hero-title { font-size: clamp(2.75rem, 12.5vw, 3.6rem); margin-bottom: .75rem; }
-  .hero-text { max-width: 100%; margin-bottom: 1rem; }
-  .hero-lead { font-size: .93rem; margin-bottom: 1.25rem; }
   .hero-bottom { height: 60px; }
-  .trust-bar { margin-top: 1rem; padding: .05rem; flex-wrap: wrap; gap: 0; }
-  .trust-item { padding: .5rem .8rem; font-size: .64rem; gap: .45rem; }
-  .trust-divider { height: 16px; margin: 0 .1rem; }
-  .trust-icon { width: 13px; height: 13px; }
   .hero-dot { height: 20px; }
   .hero-dot.is-active { height: 32px; }
 
@@ -163,8 +142,6 @@ html, body { overflow-x: clip; }
 
   .logo { font-size: .88rem; letter-spacing: 0; }
   .icon-btn { width: 44px; height: 44px; }
-
-  .hero-title { font-size: clamp(2.5rem, 12.5vw, 3.2rem); }
 
   .mm-link { font-size: 1.28rem; }
 
