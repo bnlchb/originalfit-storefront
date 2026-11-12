@@ -96,23 +96,14 @@
   <main>
 
     <!-- ══════════════════════════ hero section ══════════════════════════════ -->
-    <section class="hero" id="hero" aria-label="THE ORIGINAL FIT — premium streetwear">
-      <!-- dynamic image slides (injected by JS from Supabase) -->
-      <div class="hero-slides" aria-label="Hero slideshow" aria-live="polite">
-        <!-- fallback brand slide — paints instantly, and stays whenever no
-             hero image has loaded (slow network, demo mode, no slides yet) -->
-        <div class="hero-slide hero-slide--logo is-active" aria-hidden="true">
-          <svg class="hero-logo-mark" viewBox="0 0 200 232" role="img" aria-label="THE ORIGINAL FIT logo">
-            <circle class="lg-ring" cx="100" cy="100" r="94"/>
-            <circle class="lg-spin" cx="100" cy="100" r="82"/>
-            <text class="lg-mono" x="104" y="98" text-anchor="middle" dominant-baseline="central">OF</text>
-            <text class="lg-word" x="101" y="222" text-anchor="middle">THE ORIGINAL FIT</text>
-          </svg>
-        </div>
+    <section class="hero" id="hero" aria-label="Hero slideshow">
+      <!-- dynamic image slides (injected by JS from Supabase) — full-bleed, extends to bottom edge -->
+      <div class="hero-slides" style="background-image:url('https://images.unsplash.com/photo-1520975659398-22672f54b0d4?q=80&w=2000&auto=format&fit=crop');background-size:cover;background-position:right center;background-repeat:no-repeat" aria-label="Hero slideshow" aria-live="polite">
+        <!-- TODO: replace the background-image URL above with your actual studio asset -->
       </div>
 
-      <!-- dark overlay so typography stays readable over any image -->
-      <div class="hero-overlay"></div>
+      <!-- bottom edge: clean background extension so the hero flows into the next section with no gap -->
+      <div class="hero-bottom"></div>
 
       <!-- prev / next arrows overlaying the banner -->
       <button class="hero-arrow hero-arrow-prev" type="button" aria-label="Previous slide">
@@ -121,8 +112,6 @@
       <button class="hero-arrow hero-arrow-next" type="button" aria-label="Next slide">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hero-arrow-icon"><path d="m9 18 6-6-6-6"></path></svg>
       </button>
-
-      <div class="hero-gradient"></div>
 
       <!-- dot indicators (JS builds one button per slide) -->
       <div class="hero-dots-wrap" aria-hidden="true">

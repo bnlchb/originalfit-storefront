@@ -31,16 +31,7 @@ html, body { overflow-x: clip; }
 
   /* hero simplifies: stronger gradient, text stays readable */
   .hero { height: clamp(440px, 62vh, 560px); }
-  .hero-slide, .hero-media { left: 30%; }
-  .hero-gradient {
-    background: linear-gradient(90deg,
-      rgba(255, 255, 255, .97) 0%,
-      rgba(248, 248, 246, .94) 32%,
-      rgba(244, 244, 242, .7) 52%,
-      rgba(244, 244, 242, .18) 72%,
-      rgba(244, 244, 242, .05) 88%);
-  }
-  .hero-lead { max-width: 36ch; }
+  .hero-bottom { height: 80px; }
 
   .pdp-grid { grid-template-columns: 1fr; }
   .pdp-sticky { position: static; }
@@ -77,23 +68,15 @@ html, body { overflow-x: clip; }
   .announcement-in { justify-content: center; }
   .announcement-links { display: none; }
 
-  /* hero: model image becomes the lower / right half, text above */
+  /* hero: content stacks vertically, readable on small screens */
   .hero {
     height: auto;
     min-height: 100dvh;
     max-height: 1100px;
   }
-  .hero-inner {
-    justify-content: flex-end;
-    padding-bottom: 4.6rem;
-  }
-  .hero-title { font-size: clamp(2.75rem, 12.5vw, 3.6rem); } /* sized so the unbreakable "ORIGINAL FIT" line never clips its right edge on any phone width */
-  .hero-subtitle { letter-spacing: .34em; }
-  .hero-lead { font-size: .93rem; }
-  .hero-rail { right: .9rem; }
+  .hero-bottom { height: 60px; }
   .hero-dot { height: 20px; }
   .hero-dot.is-active { height: 32px; }
-  .hero-est { font-size: .56rem; }
 
   /* brand fallback slide sizes down with the phone */
   .hero-logo-mark { width: clamp(112px, 34vw, 150px); }
@@ -160,8 +143,6 @@ html, body { overflow-x: clip; }
   .logo { font-size: .88rem; letter-spacing: 0; }
   .icon-btn { width: 44px; height: 44px; }
 
-  .hero-title { font-size: clamp(2.5rem, 12.5vw, 3.2rem); }
-
   .mm-link { font-size: 1.28rem; }
 
   .news-form { flex-direction: column; padding: .45rem; border-radius: var(--radius-md); }
@@ -198,5 +179,4 @@ html, body { overflow-x: clip; }
   .hero-arrow-next { right: 0.5rem; }
   .hero-dots-wrap { bottom: clamp(1.4rem, 6vw, 2.2rem); gap: 0.5rem; }
   .hero-dot { width: 8px; height: 8px; border-width: 1.5px; }
-  .hero-est { right: 0.6rem; bottom: clamp(1.2rem, 4vw, 1.8rem); font-size: 0.52rem; }
 }

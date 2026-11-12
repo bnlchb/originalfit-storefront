@@ -415,7 +415,7 @@ body.solid-header .site-header { background: rgba(255, 255, 255, .92); backdrop-
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center;
+  object-position: right;
   display: block;
 }
 .hero-slide.is-active {
@@ -428,13 +428,6 @@ body.solid-header .site-header { background: rgba(255, 255, 255, .92); backdrop-
   transform: translateX(-100%);
   z-index: 1;
 }
-.hero-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.28) 0%, rgba(0, 0, 0, 0.12) 40%, rgba(0, 0, 0, 0.34) 100%);
-}
-
 /* --- arrows overlaying the banner --- */
 .hero-arrow {
   position: absolute;
@@ -468,8 +461,8 @@ body.solid-header .site-header { background: rgba(255, 255, 255, .92); backdrop-
   pointer-events: none;
   border-color: var(--line);
 }
-.hero-arrow-prev { left: max(1rem, (100vw - var(--wrap)) / 2); }
-.hero-arrow-next { right: max(1rem, (100vw - var(--wrap)) / 2); }
+.hero-arrow-prev { left: 1.75rem; }
+.hero-arrow-next { right: 1.75rem; }
 
 .hero-arrow-icon {
   width: 24px;
@@ -482,10 +475,25 @@ body.solid-header .site-header { background: rgba(255, 255, 255, .92); backdrop-
   transform: scaleX(-1);
 }
 
+/* ============================================================ hero content ===== */
+/* full-bleed bottom extension: keeps the background flowing into the next
+   section instead of cutting off abruptly at the hero's bottom edge */
+.hero-bottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 120px;
+  background: linear-gradient(to bottom, transparent 0%, var(--bg-alt) 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+
 /* --- dot indicators at the bottom --- */
 .hero-dots-wrap {
   position: absolute;
-  bottom: clamp(2rem, 5vw, 3.4rem);
+  bottom: 2rem;
   left: 50%;
   transform: translateX(-50%);
   z-index: 6;
@@ -549,118 +557,6 @@ body.solid-header .site-header { background: rgba(255, 255, 255, .92); backdrop-
 @keyframes logo-spin { to { transform: rotate(1turn); } }
 @media (prefers-reduced-motion: reduce) {
   .hero-logo-mark, .lg-spin { animation: none; }
-}
-.hero-est {
-  position: absolute;
-  bottom: clamp(1.6rem, 4vw, 2.6rem);
-  right: max(1rem, (100vw - var(--wrap)) / 2);
-  writing-mode: vertical-rl;
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.34em;
-  text-transform: uppercase;
-  color: var(--muted);
-  z-index: 6;
-}
-
-.hero-gradient {
-  position: absolute;
-  inset: -1px;
-  background:
-    linear-gradient(90deg,
-      rgba(255, 255, 255, .96) 0%,
-      rgba(248, 248, 246, .88) 26%,
-      rgba(244, 244, 242, .45) 46%,
-      rgba(244, 244, 242, .06) 64%,
-      rgba(244, 244, 242, 0) 78%);
-  z-index: 0;
-}
-.hero-gradient::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(0deg, rgba(10, 10, 10, .18), transparent 30%);
-}
-
-.hero-inner {
-  position: relative;
-  z-index: 2;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: flex-start;
-  width: min(var(--wrap), 100% - 3rem);
-  margin-inline: auto;
-  padding-top: var(--nav-h);
-}
-.hero-kicker { composes: none; }
-.hero-title {
-  margin-top: .9rem;
-  font-size: var(--fs-xxl);
-  font-weight: 900;
-  line-height: .93;
-  letter-spacing: -.028em;
-  max-width: 12ch;
-}
-.hero-title .line { display: block; }
-.hero-subtitle {
-  margin-top: 1.1rem;
-  font-size: var(--fs-xs);
-  font-weight: 700;
-  letter-spacing: .42em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
-}
-.hero-lead {
-  margin-top: .9rem;
-  font-size: .98rem;
-  color: var(--muted);
-  line-height: 1.65;
-}
-/* hero CTA row: pill button + gray inline "SCROLL DOWN" cue */
-.hero-cta-row {
-  margin-top: 1.6rem;
-  display: flex;
-  align-items: center;
-  gap: 1.2rem;
-  flex-wrap: wrap;
-}
-.hero-cta { margin-top: 0; }
-
-/* "(Scroll Down)" beside the hero CTA — tone-on-tone gray rgb(102,102,102) */
-.hero-scroll-inline {
-  display: inline-flex;
-  align-items: center;
-  font-size: .66rem;
-  font-weight: 600;
-  letter-spacing: .3em;
-  text-transform: uppercase;
-  color: #666666;                  /* rgb(102 102 102) */
-  transition: color var(--ease) .2s;
-}
-.hero-scroll-inline:hover { color: var(--ink); }
-
-.hero-rail {
-  position: absolute;
-  right: max(1.5rem, (100vw - var(--wrap)) / 2);
-  top: 0;
-  bottom: 0;
-  z-index: 3;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1.1rem;
-}
-.hero-est {
-  margin-top: 1.2rem;
-  writing-mode: vertical-rl;
-  font-size: .62rem;
-  font-weight: 700;
-  letter-spacing: .34em;
-  text-transform: uppercase;
-  color: var(--muted);
 }
 
 /* --------------------------------------------------------- product cards -- */
@@ -1362,7 +1258,7 @@ color: #fff;
 
 /* ------------------------------------------------------------ page header -- */
 .page-head {
-  padding: calc(var(--nav-h) + clamp(38px, 6vw, 76px)) 0 clamp(30px, 4.5vw, 54px);
+  padding: clamp(38px, 6vw, 76px) 0 clamp(30px, 4.5vw, 54px);
 }
 .page-head h1 { font-size: var(--fs-xl); }
 .page-head .breadcrumb {
@@ -1417,12 +1313,18 @@ color: #fff;
   display: block;
   min-width: 0;
   min-height: 0;
-  transition: opacity var(--ease) .3s;
+  transition: transform 0.4s var(--ease), opacity var(--ease) .3s;
+  transform: scale(1);
+  transform-origin: center center;
+  will-change: transform;
   /* native img click-drag/select paints a browser-blue veil — kill it at the source */
   user-select: none;
   -webkit-user-select: none;
   -webkit-user-drag: none;
 }
+/* hover-to-zoom: strip the transition while the cursor pans so the lens
+   follows the mouse with zero lag; restored on mouseenter/mouseleave */
+.pdp-media img.is-zoom-panning { transition: none !important; }
 .pdp-thumbs img {
   user-select: none;
   -webkit-user-select: none;
@@ -2039,4 +1941,7 @@ body.lb-open { overflow: hidden; }
 .hours-line { display: flex; justify-content: space-between; font-size: .92rem; color: var(--muted); padding: .35rem 0; border-bottom: 1px dashed var(--line); }
 .hours-line b { color: var(--ink); font-weight: 700; }
 
-.page-wrap { min-height: calc(100dvh - var(--announce-h)); }
+.page-wrap {
+  min-height: calc(100dvh - var(--announce-h));
+  padding-top: var(--nav-h);
+}
