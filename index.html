@@ -97,11 +97,22 @@
 
     <!-- ══════════════════════════ hero section ══════════════════════════════ -->
     <section class="hero" id="hero" aria-label="THE ORIGINAL FIT — premium streetwear">
-      <!-- dynamic image slides (injected by JS from Supabase) -->
-      <div class="hero-slides" aria-label="Hero slideshow" aria-live="polite">
-        <!-- fallback brand slide — paints instantly, and stays whenever no
-             hero image has loaded (slow network, demo mode, no slides yet) -->
-        <div class="hero-slide hero-slide--logo is-active" aria-hidden="true">
+      <!-- left side: typography + CTA (stays clear of the image) -->
+      <div class="hero-inner">
+        <p class="hero-kicker">THE ORIGINAL FIT</p>
+        <h1 class="hero-title"><span class="line">Style.</span><span class="line">Comfort.</span><span class="line">Performance.</span></h1>
+        <p class="hero-lead">Premium streetwear built for movement — light, breathable, cut to perform on the street and beyond.</p>
+        <div class="hero-cta-row">
+          <a href="pages/shop.html" class="btn hero-cta">Shop Collection</a>
+          <a href="pages/collections.html" class="btn btn-outline hero-cta">View All</a>
+        </div>
+      </div>
+
+      <!-- dynamic image slides (injected by JS from Supabase) — model sits on the right -->
+      <div class="hero-slides" style="background-image:url('https://images.unsplash.com/photo-1520975659398-22672f54b0d4?q=80&w=2000&auto=format&fit=crop');background-size:cover;background-position:right center;background-repeat:no-repeat" aria-label="Hero slideshow" aria-live="polite">
+        <!-- TODO: replace the background-image URL above with your actual studio asset -->
+        <!-- fallback brand slide — paints instantly when no slide has loaded -->
+        <div class="hero-slide hero-slide--logo" aria-hidden="true">
           <svg class="hero-logo-mark" viewBox="0 0 200 232" role="img" aria-label="THE ORIGINAL FIT logo">
             <circle class="lg-ring" cx="100" cy="100" r="94"/>
             <circle class="lg-spin" cx="100" cy="100" r="82"/>
@@ -111,7 +122,14 @@
         </div>
       </div>
 
-      <!-- dark overlay so typography stays readable over any image -->
+      <!-- subtle large translucent leaping cat logo outline (cyan-blue) — right background -->
+      <div class="hero-cat-mark" aria-hidden="true">
+        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+          <path d="M50 115 Q70 135 100 125 T150 105 Q170 85 180 65 Q175 45 155 50 Q135 65 110 80 Q85 95 60 115 Q50 120 50 115 Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="185" cy="60" r="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M50 115 Q30 125 35 145 Q45 165 65 155" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
 
       <!-- prev / next arrows overlaying the banner -->
       <button class="hero-arrow hero-arrow-prev" type="button" aria-label="Previous slide">

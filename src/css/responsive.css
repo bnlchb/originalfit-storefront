@@ -31,7 +31,8 @@ html, body { overflow-x: clip; }
 
   /* hero simplifies: stronger gradient, text stays readable */
   .hero { height: clamp(440px, 62vh, 560px); }
-  .hero-slide, .hero-media { left: 30%; }
+  .hero-media { left: 30%; }
+  .hero-cat-mark { width: clamp(200px, 35vw, 340px); top: 6%; right: 4%; }
   .hero-lead { max-width: 36ch; }
 
   .pdp-grid { grid-template-columns: 1fr; }
