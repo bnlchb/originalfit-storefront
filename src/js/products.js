@@ -41,17 +41,12 @@ window.TOF = window.TOF || {};
   const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
   /** Collapse raw product_sizes rows into [{size, stock}] ordered XS→XXL.
-      Sizes outside the canonical ladder (e.g. 'One Size', migration 0011)
-      are preserved and appended after it. Returns null when the product has
-      no size rows (legacy: all sizes follow the product-level stock). */
+      Returns null when the product has no size rows (legacy: all sizes
+      follow the product-level stock). */
   function normalizeSizes(rows) {
     if (!Array.isArray(rows) || !rows.length) return null;
     const bySize = new Map(rows.map((r) => [r.size, Number(r.stock) || 0]));
-    const out = SIZE_ORDER.map((s) => ({ size: s, stock: bySize.get(s) || 0 }));
-    rows.forEach((r) => {
-      if (!SIZE_ORDER.includes(r.size)) out.push({ size: String(r.size), stock: Number(r.stock) || 0 });
-    });
-    return out;
+    return SIZE_ORDER.map((s) => ({ size: s, stock: bySize.get(s) || 0 }));
   }
 
   /** Map a live/demo DB row into the app shape. */
@@ -245,5 +240,5 @@ window.TOF = window.TOF || {};
       </div>`).join('');
   }
 
-  T.products = { loadOnce, list, get, categories, search, cardHTML, renderCards, skeletonCards, badgeOf, normalize, descHTML, normalizeSizes };
+  T.products = { loadOnce, list, get, categories, search, cardHTML, renderCards, skeletonCards, badgeOf, normalize, descHTML };
 })(window.TOF);

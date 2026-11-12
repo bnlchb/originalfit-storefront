@@ -126,15 +126,10 @@ window.TOF = window.TOF || {};
   /* ---------------------------------------------------------- cart drawer -- */
   function drawerItemHTML(it) {
     const snap = Array.isArray(it.sizes) && it.sizes.length ? it.sizes : null;
-    /* chips follow the item's own size set: ladder products (and legacy
-       lines) show the six canonical sizes, One Size lines show only theirs —
-       the same rule the PDP applies, so the two can never drift apart */
-    const ownSizes = snap ? snap.filter((x) => !T.cart.SIZES.includes(x.size)) : [];
-    const chipSizes = ownSizes.length ? ownSizes.map((x) => x.size) : T.cart.SIZES;
     const chipFor = (s) => {
       const row = snap && (snap.find((x) => x.size === s) || {});
       const out = snap ? ((row.stock || 0) <= 0) : false;
-      return `<button type="button" class="chip${s === it.size ? ' is-on' : ''}${out ? ' is-out' : ''}" aria-pressed="${s === it.size}"${out ? ' disabled title="Out of stock"' : ''} data-size="${T.esc(s)}">${T.esc(s)}</button>`;
+      return `<button type="button" class="chip${s === it.size ? ' is-on' : ''}${out ? ' is-out' : ''}" aria-pressed="${s === it.size}"${out ? ' disabled title="Out of stock"' : ''} data-size="${s}">${s}</button>`;
     };
     return `
       <div class="cart-item" data-key="${it.key}">
@@ -142,7 +137,7 @@ window.TOF = window.TOF || {};
         <div class="ci-info">
           <h4 class="ci-name"><a href="${PRODUCTS_URL(it.id)}">${T.esc(it.name)}</a></h4>
           <div class="ci-size-chips">
-            ${chipSizes.map(chipFor).join('')}
+            ${T.cart.SIZES.map(chipFor).join('')}
           </div>
           <div class="ci-qty">
             <button type="button" data-step="-1" aria-label="Decrease quantity">−</button>
@@ -253,12 +248,9 @@ window.TOF = window.TOF || {};
         if (!firstAvail) { T.toast(`${p.name} is out of stock.`); return; }
 
         const res = T.cart.add(p, firstAvail, 1);
-        if (res === 'blocked') {
-          T.toast(firstAvail === 'One Size' ? 'One Size is out of stock.' : `Size ${firstAvail} is out of stock.`);
-          return;
-        }
+        if (res === 'blocked') { T.toast(`Size ${firstAvail} is out of stock.`); return; }
         if (res === 'clamped') T.toast('Limited stock — cart updated to what is available.');
-        else T.toast(firstAvail === 'One Size' ? `${p.name} — added to cart.` : `${p.name} — added to cart (size ${firstAvail}).`);
+        else T.toast(`${p.name} — added to cart (size ${firstAvail}).`);
         bumpCartCount();
         // open the drawer for immediate feedback
         const drawer = qs('#cart-drawer');
@@ -759,25 +751,22 @@ window.TOF = window.TOF || {};
     stockLine.classList.toggle('is-out', !(Number(p.stock) > 0));
     stockLine.textContent = p.stock > 0 ? 'In stock and ready to ship' : 'Out of stock';
 
-    // sizes — chips follow what the product actually carries (0009): the six
-    // canonical sizes for variant products, the product's own size ('One
-    // Size', 0011) when it has no variants. Legacy products (no size rows)
-    // keep every size following the product-level stock.
-    const SIZE_LADDER = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+    // sizes — the six canonical chips. Per-size rows (migration 0009) are
+    // authoritative when configured; a product without them keeps the legacy
+    // behavior where every size follows the product-level stock.
+    const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
     const sizeRows = Array.isArray(p.sizes) && p.sizes.length ? p.sizes : null;
-    const ownSizes = sizeRows ? sizeRows.filter((x) => !SIZE_LADDER.includes(x.size)) : [];
-    const chipSizes = ownSizes.length ? ownSizes.map((x) => x.size) : SIZE_LADDER;
     const stockOf = (s) => sizeRows
       ? ((sizeRows.find((x) => x.size === s) || {}).stock || 0)
       : (Number(p.stock) || 0);
     const chipsWrap = qs('#pdp-sizes');
-    chipsWrap.innerHTML = chipSizes.map((s) => {
+    chipsWrap.innerHTML = SIZE_ORDER.map((s) => {
       const st = stockOf(s);
       const out = st <= 0;
-      return `<button type="button" class="chip${out ? ' is-out' : ''}" data-size="${T.esc(s)}" aria-pressed="false"${out ? ' disabled title="Out of stock"' : ''}>${T.esc(s)}</button>`;
+      return `<button type="button" class="chip${out ? ' is-out' : ''}" data-size="${s}" aria-pressed="false"${out ? ' disabled title="Out of stock"' : ''}>${s}</button>`;
     }).join('');
 
-    let size = (chipSizes.find((s) => stockOf(s) > 0)) || null;
+    let size = (SIZE_ORDER.find((s) => stockOf(s) > 0)) || null;
     const sizeHint = qs('#pdp-size-hint');
 
     const paintSizes = () => {
@@ -786,9 +775,7 @@ window.TOF = window.TOF || {};
         c.setAttribute('aria-pressed', String(c.dataset.size === size));
       });
       sizeHint.classList.toggle('is-out', !size);
-      sizeHint.textContent = size
-        ? (size === 'One Size' ? 'One size selected' : `Size ${size} selected`)
-        : 'Out of stock';
+      sizeHint.textContent = size ? `Size ${size} selected` : 'Out of stock';
     };
     chipsWrap.addEventListener('click', (e) => {
       const chip = e.target.closest('.chip');
@@ -813,12 +800,9 @@ window.TOF = window.TOF || {};
     qs('#pdp-add').addEventListener('click', () => {
       if (!size) { T.toast('This product is out of stock in every size.'); return; }
       const res = T.cart.add(p, size, qty);
-      if (res === 'blocked') {
-        T.toast(size === 'One Size' ? 'One Size is out of stock.' : `Size ${size} is out of stock.`);
-        return;
-      }
+      if (res === 'blocked') { T.toast(`Size ${size} is out of stock.`); return; }
       if (res === 'clamped') T.toast('Limited stock — cart updated to what is available.');
-      else T.toast(size === 'One Size' ? `${p.name} × ${qty} — added to cart.` : `${p.name} × ${qty} — added to cart (size ${size}).`);
+      else T.toast(`${p.name} × ${qty} — added to cart (size ${size}).`);
       bumpCartCount();
       const drawer = qs('#cart-drawer');
       if (drawer && !drawer.classList.contains('is-open')) qs('#cart-open')?.click();

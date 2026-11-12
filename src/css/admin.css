@@ -201,27 +201,6 @@
 .sz-cell input::-webkit-outer-spin-button,
 .sz-cell input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
-/* One Size (0011): full-width row beneath the ladder. The two modes are
-   mutually exclusive — whichever side carries stock locks and dims the other,
-   so a save can never mix ladder rows and One Size on the same product. */
-.sz-cell--one { grid-column: 1 / -1; }
-.sz-cell--one span { color: var(--ink); letter-spacing: .22em; }
-.sz-cell.is-off { opacity: .4; }
-.sz-cell input:disabled {
-  color: var(--muted);
-  background: var(--bg-alt);
-  border-color: var(--line);
-  cursor: not-allowed;
-}
-.sz-hint {
-  max-width: 620px;
-  margin-top: .5rem;
-  font-size: var(--fs-xs);
-  color: var(--muted);
-  letter-spacing: .02em;
-}
-.sz-hint b { color: var(--ink); font-weight: 800; }
-
 @media (max-width: 560px) {
   .sz-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
