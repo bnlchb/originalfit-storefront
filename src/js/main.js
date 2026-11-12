@@ -586,8 +586,10 @@ window.TOF = window.TOF || {};
 
     const notFound = qs('#pdp-not-found');
     if (!p) {
-      notFound.hidden = false;
-      shell.hidden = true;
+      /* No valid product for this id — redirect to shop instead of showing
+         an empty 0.00 DH template. Keeps the not-found block as a fallback
+         for non-JS or direct-link scenarios. */
+      window.location.href = SHOP_URL();
       return;
     }
     notFound.hidden = true;
@@ -769,6 +771,7 @@ window.TOF = window.TOF || {};
     const badgeEl = qs('#pdp-badge');
     const b = T.products.badgeOf(p);
     if (b) { badgeEl.hidden = false; badgeEl.className = 'badge ' + b.cls; badgeEl.textContent = b.label; }
+    else { badgeEl.hidden = true; }
 
     qs('#pdp-cat').textContent = p.categoryName || 'T-Shirts';
     qs('#pdp-title').textContent = p.name;

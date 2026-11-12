@@ -1258,7 +1258,7 @@ color: #fff;
 
 /* ------------------------------------------------------------ page header -- */
 .page-head {
-  padding: calc(var(--nav-h) + clamp(38px, 6vw, 76px)) 0 clamp(30px, 4.5vw, 54px);
+  padding: clamp(38px, 6vw, 76px) 0 clamp(30px, 4.5vw, 54px);
 }
 .page-head h1 { font-size: var(--fs-xl); }
 .page-head .breadcrumb {
@@ -1941,4 +1941,7 @@ body.lb-open { overflow: hidden; }
 .hours-line { display: flex; justify-content: space-between; font-size: .92rem; color: var(--muted); padding: .35rem 0; border-bottom: 1px dashed var(--line); }
 .hours-line b { color: var(--ink); font-weight: 700; }
 
-.page-wrap { min-height: calc(100dvh - var(--announce-h)); }
+.page-wrap {
+  min-height: calc(100dvh - var(--announce-h));
+  padding-top: var(--nav-h);
+}
