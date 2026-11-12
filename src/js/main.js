@@ -604,19 +604,7 @@ window.TOF = window.TOF || {};
       countEl.textContent = (gi + 1) + ' / ' + gallery.length;
       qsa('#pdp-thumbs .pdpt').forEach((t, k) => t.classList.toggle('is-on', k === gi));
     };
-    const imgEl = qs('#pdp-img');
-    const ZOOM = 2.2;
-    let zoomActive = false;
-    const resetZoom = () => {
-      if (!zoomActive) return;
-      zoomActive = false;
-      imgEl.style.transition = 'transform 0.4s var(--ease)';
-      imgEl.style.transformOrigin = 'center center';
-      imgEl.style.transform = 'scale(1)';
-      imgEl.classList.remove('is-zoom-panning');
-    };
     const paint = (i) => {
-      resetZoom(); // clear any active hover-to-zoom when the photo changes
       gi = i < 0 ? gallery.length - 1 : (i >= gallery.length ? 0 : i); // wrap-around
       const el = qs('#pdp-img');
       const next = gallery[gi];
@@ -656,31 +644,6 @@ window.TOF = window.TOF || {};
     }
 
     if (multi) { media.classList.add('has-multi'); }
-
-    /* --- hover-to-zoom (magnifying lens) on the main product image --- */
-    (function () {
-      if (!imgEl) return;
-      media.addEventListener('mouseenter', () => {
-        zoomActive = true;
-        imgEl.classList.remove('is-zoom-panning');
-        imgEl.style.transition = 'transform 0.4s var(--ease)';
-        imgEl.style.transformOrigin = 'center center';
-        imgEl.style.transform = `scale(${ZOOM})`;
-      });
-
-      media.addEventListener('mousemove', (e) => {
-        if (!zoomActive) return;
-        imgEl.classList.add('is-zoom-panning');
-        imgEl.style.transition = 'none'; // zero lag while panning
-        const r = media.getBoundingClientRect();
-        const x = ((e.clientX - r.left) / r.width) * 100;
-        const y = ((e.clientY - r.top) / r.height) * 100;
-        imgEl.style.transformOrigin = `${x}% ${y}%`;
-        imgEl.style.transform = `scale(${ZOOM})`;
-      });
-
-      media.addEventListener('mouseleave', resetZoom);
-    })();
 
     // fullscreen viewer (brand-consistent): click any photo → large, clear view
     const lb = qs('#pdp-lb');

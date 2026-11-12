@@ -1313,18 +1313,12 @@ color: #fff;
   display: block;
   min-width: 0;
   min-height: 0;
-  transition: transform 0.4s var(--ease), opacity var(--ease) .3s;
-  transform: scale(1);
-  transform-origin: center center;
-  will-change: transform;
+  transition: opacity var(--ease) .3s;   /* photo-swap crossfade only */
   /* native img click-drag/select paints a browser-blue veil — kill it at the source */
   user-select: none;
   -webkit-user-select: none;
   -webkit-user-drag: none;
 }
-/* hover-to-zoom: strip the transition while the cursor pans so the lens
-   follows the mouse with zero lag; restored on mouseenter/mouseleave */
-.pdp-media img.is-zoom-panning { transition: none !important; }
 .pdp-thumbs img {
   user-select: none;
   -webkit-user-select: none;
