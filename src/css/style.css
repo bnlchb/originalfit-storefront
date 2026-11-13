@@ -568,7 +568,14 @@ body.solid-header .site-header { background: rgba(255, 255, 255, .92); backdrop-
 }
 .product-grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 
-.product-card { position: relative; }
+/* flex column so every card in a grid row is equal height and the Add to
+   Cart button can pin to the card bottom — one wrapped title line can no
+   longer push a row's buttons down relative to their neighbours. */
+.product-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
 
 /* FIXED, UNIFORM, SQUARE product frame — every product image on the site
    (shop, home sections, related, wishlist) renders inside this exact box:
@@ -668,7 +675,15 @@ body.solid-header .site-header { background: rgba(255, 255, 255, .92); backdrop-
 .wish-btn.is-active { color: var(--ink); }
 .wish-btn.is-active svg path { fill: var(--ink); }
 
-.p-info { padding: .95rem .15rem 0; display: grid; gap: .45rem; justify-items: start; }
+.p-info {
+  padding: .95rem .15rem 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: .45rem;
+  flex: 1;                     /* fill the card below the fixed media frame */
+  min-height: 0;
+}
 .p-name {
   font-size: .95rem;
   font-weight: 700;
@@ -680,7 +695,9 @@ body.solid-header .site-header { background: rgba(255, 255, 255, .92); backdrop-
 .p-price .now { font-weight: 800; }
 .p-price .was { font-size: .82rem; }
 .p-add {
-  margin-top: .4rem;
+  margin-top: auto;            /* the .45rem gap is the minimum spacing; auto
+                                  margin eats the rest so all buttons in a
+                                  grid row land on the same level */
   padding: .72em 1.5em;
 }
 .p-add.added { background: #3f3f3f; }
