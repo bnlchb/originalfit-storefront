@@ -30,6 +30,9 @@ for (const page of pages) {
   const want = ['env','supabase','products','cart','wishlist','auth','search','main'];
   const got = want.filter(w=>order.includes(w));
   if (JSON.stringify(got) !== JSON.stringify(order)) issues.push(`${page}: script order ${order.join(',')} != expected`);
+  // the credentials script is not optional: a page without env.js boots in
+  // demo mode (this is how the PDP silently lost its Supabase connection)
+  if (!order.includes('env')) issues.push(`${page}: missing env.js script tag — Supabase credentials never load on this page`);
   // root homepage must carry data-base="pages/"; inner pages intentionally don't (same-dir links)
   const isRoot = page === 'index.html';
   if (isRoot && !/data-base="pages\/?"/.test(html)) issues.push(`${page}: missing data-base="pages/"`);
