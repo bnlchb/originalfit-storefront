@@ -95,15 +95,31 @@ window.TOF = window.TOF || {};
     let cats = [];
 
     if (T.mode === 'supabase') {
-      /* --- live: separate selects then client-side join (robust) --- */
-      const [p, c, sz] = await Promise.all([
-        T.sb.from('products').select('*').eq('is_active', true).order('created_at', { ascending: false }),
-        T.sb.from('categories').select('*').order('id'),
-        /* optional 0009 table — a failed read simply leaves every product in
-           legacy mode, where all sizes follow the product-level stock */
-        T.sb.from('product_sizes').select('*'),
-      ]);
-      if (!p.error && !c.error) {
+      /* --- live: separate selects then client-side join (robust) ---
+         One transient hiccup (rate limit, dropped request) must not leave the
+         whole catalog empty for the page view — every attempt retries the
+         full trio with a short backoff before settling on empty. */
+      const attempts = [0, 350, 900];
+      for (let i = 0; i < attempts.length; i++) {
+        if (attempts[i]) await T.sleep(attempts[i]);
+        let p, c, sz;
+        try {
+          [p, c, sz] = await Promise.all([
+            T.sb.from('products').select('*').eq('is_active', true).order('created_at', { ascending: false }),
+            T.sb.from('categories').select('*').order('id'),
+            /* optional 0009 table — a failed read simply leaves every product in
+               legacy mode, where all sizes follow the product-level stock */
+            T.sb.from('product_sizes').select('*'),
+          ]);
+        } catch (err) {
+          console.warn('[TOF] catalog network hiccup — retrying:', err && err.message);
+          continue;
+        }
+        if (p.error || c.error) {
+          console.warn('[TOF] catalog fetch failed (attempt ' + (i + 1) + ') — retrying:',
+            (p.error && p.error.message) || (c.error && c.error.message));
+          continue;
+        }
         const catById = new Map((c.data || []).map((c) => [Number(c.id), c]));
         const sizesByProduct = new Map();
         if (!sz.error) {
@@ -121,8 +137,7 @@ window.TOF = window.TOF || {};
           id: Number(c.id), slug: c.slug, name: c.name,
           imageUrl: c.image_url || '', description: c.description || '',
         }));
-      } else {
-        console.warn('[TOF] catalog fetch failed — catalog stays empty until Supabase responds:', (p.error && p.error.message) || (c.error && c.error.message));
+        break; // success — keep these rows
       }
     }
 

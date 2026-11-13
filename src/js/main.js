@@ -574,7 +574,15 @@ window.TOF = window.TOF || {};
     if (!shell) return;
 
     const id = Number(new URLSearchParams(location.search).get('id'));
-    const p = await T.products.get(id);
+    let p = await T.products.get(id);
+
+    if (!p && id) {
+      /* A transient Supabase hiccup must never bounce a real product to the
+         shop: settle briefly, force one fresh catalog fetch, then decide. */
+      await T.sleep(700);
+      await T.products.loadOnce(true);
+      p = await T.products.get(id);
+    }
 
     const notFound = qs('#pdp-not-found');
     if (!p) {
