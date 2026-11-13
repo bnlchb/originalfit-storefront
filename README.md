@@ -106,7 +106,7 @@ the-original-fit/
 
 | Area | Details |
 | --- | --- |
-| Home | Announcement bar, transparent→solid sticky nav, 3-slide hero with EST. 2024 rail & scroll cue, New Arrivals (live), 50% OFF promo banner, Our Collections |
+| Home | Announcement bar, transparent→solid sticky nav, 3-slide hero with EST. 2026 rail & scroll cue, New Arrivals (live), 50% OFF promo banner, Our Collections |
 | Shop | Category chips, On-Sale filter, sorting (best sellers / newest / price / name), keyword search, result count, skeletons, empty state |
 | Product | Zoom-on-hover media, size selector, quantity stepper, wishlist heart, stock state, related products, accordions |
 | Cart | Sliding drawer + full page, size chips per line, qty · −/+, remove, free-shipping progress over 500 DH, persisted between sessions (localStorage) |
