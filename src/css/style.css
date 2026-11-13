@@ -391,8 +391,9 @@ body.solid-header .site-header { background: rgba(255, 255, 255, .92); backdrop-
      header row stays fully visible on top of the page and the photo starts
      at its bottom edge (the old negative margin slid the photo behind the
      transparent header and hid the nav row) */
-  height: calc(100vh - var(--nav-h));   /* fallback for older browsers */
-  height: calc(100svh - var(--nav-h));  /* stable against mobile URL bars */
+  height: calc(100vh - var(--nav-h) - var(--announce-h));   /* fallback for older browsers */
+  height: calc(100svh - var(--nav-h) - var(--announce-h));  /* stable against mobile URL bars;
+    the announcement strip sits above the navbar, so both come off the viewport */
   min-height: 440px;                    /* absolute floor for tiny windows */
   background: var(--bg-alt);
   overflow: hidden;

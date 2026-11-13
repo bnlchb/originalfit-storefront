@@ -149,7 +149,7 @@ html, body { overflow-x: clip; }
 
 /* very short landscape phones: still exactly the space below the navbar */
 @media (max-height: 460px) and (orientation: landscape) {
-  .hero { min-height: calc(100vh - var(--nav-h)); }
+  .hero { min-height: calc(100vh - var(--nav-h) - var(--announce-h)); }
 }
 
 /* ====================================== hero carousel responsive ============ */
