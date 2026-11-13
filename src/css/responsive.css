@@ -29,8 +29,7 @@ html, body { overflow-x: clip; }
   .main-nav { display: none; }
   .hamburger { display: grid; }
 
-  /* hero simplifies: stronger gradient, text stays readable */
-  .hero { height: clamp(440px, 62vh, 560px); }
+  /* hero keeps filling the viewport below the (now 62px) navbar on tablets */
   .hero-bottom { height: 80px; }
 
   .pdp-grid { grid-template-columns: 1fr; }
@@ -68,12 +67,7 @@ html, body { overflow-x: clip; }
   .announcement-in { justify-content: center; }
   .announcement-links { display: none; }
 
-  /* hero: content stacks vertically, readable on small screens */
-  .hero {
-    height: auto;
-    min-height: 100dvh;
-    max-height: 1100px;
-  }
+  /* hero stays an image-only banner filling the screen below the navbar */
   .hero-bottom { height: 60px; }
   .hero-dot { height: 20px; }
   .hero-dot.is-active { height: 32px; }
@@ -153,9 +147,9 @@ html, body { overflow-x: clip; }
   .auth-card { border: 0; padding: 1.2rem 0; background: transparent; }
 }
 
-/* very short landscape phones */
+/* very short landscape phones: still exactly the space below the navbar */
 @media (max-height: 460px) and (orientation: landscape) {
-  .hero { min-height: 78vh; }
+  .hero { min-height: calc(100vh - var(--nav-h)); }
 }
 
 /* ====================================== hero carousel responsive ============ */

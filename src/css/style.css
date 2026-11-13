@@ -387,10 +387,15 @@ body.solid-header .site-header { background: rgba(255, 255, 255, .92); backdrop-
 /* ------------------------------------------------------------------- hero -- */
 .hero {
   position: relative;
-  height: clamp(700px, 80vh, 950px);
+  /* the banner fills exactly the viewport below the sticky navbar — the
+     header row stays fully visible on top of the page and the photo starts
+     at its bottom edge (the old negative margin slid the photo behind the
+     transparent header and hid the nav row) */
+  height: calc(100vh - var(--nav-h));   /* fallback for older browsers */
+  height: calc(100svh - var(--nav-h));  /* stable against mobile URL bars */
+  min-height: 440px;                    /* absolute floor for tiny windows */
   background: var(--bg-alt);
   overflow: hidden;
-  margin-top: calc(var(--nav-h) * -1);
   isolation: isolate;
 }
 .hero-slides {
