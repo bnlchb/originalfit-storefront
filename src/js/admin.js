@@ -71,6 +71,9 @@ window.TOF = window.TOF || {};
       return 'Still referenced elsewhere — move or delete the related rows first.';
     }
     if (/unique/i.test(m)) return 'That value already exists (duplicate slug or email).';
+    if (/product_sizes_size_check/i.test(m)) {
+      return 'The database only knows the six sizes - run migration 0011 (supabase/migrations/0011_one_size.sql) in the Supabase SQL editor to unlock One Size.';
+    }
     return m || fallback || 'Database error.';
   }
 
