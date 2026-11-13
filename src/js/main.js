@@ -438,10 +438,12 @@ window.TOF = window.TOF || {};
     btnPrev.addEventListener('click', () => { prev(); start(); });
     btnNext.addEventListener('click', () => { next(); start(); });
 
-    /* pause autoplay on hover / interaction, resume when idle */
-    hero.addEventListener('mouseenter', stop, { passive: true });
-    hero.addEventListener('mouseleave', start, { passive: true });
-    hero.addEventListener('keydown', start, { passive: true }); /* resume on keyboard nav */
+    /* pause ONLY while aiming at the controls — a cursor merely resting on
+       the photo must never freeze the show (that read as "the hero is stuck") */
+    [btnPrev, btnNext, dotsWrap?.closest('.hero-dots-wrap')].filter(Boolean).forEach((el) => {
+      el.addEventListener('mouseenter', stop, { passive: true });
+      el.addEventListener('mouseleave', start, { passive: true });
+    });
 
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) stop(); else start();
